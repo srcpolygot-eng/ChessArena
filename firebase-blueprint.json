@@ -1,0 +1,804 @@
+{
+  "entities": {
+    "UserPrivateProfile": {
+      "title": "UserPrivateProfile",
+      "description": "Private user account profile containing PII (email), personal preferences, statistics, and puzzle progress. Accessible only by the owner.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "username": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 24,
+          "pattern": "^[a-zA-Z0-9_]+$"
+        },
+        "usernameLower": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 24,
+          "pattern": "^[a-z0-9_]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "maxLength": 254
+        },
+        "photoURL": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "rating": {
+          "type": "number"
+        },
+        "gamesPlayed": {
+          "type": "number"
+        },
+        "wins": {
+          "type": "number"
+        },
+        "losses": {
+          "type": "number"
+        },
+        "draws": {
+          "type": "number"
+        },
+        "puzzlesSolved": {
+          "type": "number"
+        },
+        "puzzleRating": {
+          "type": "number"
+        },
+        "solvedPuzzleIds": {
+          "type": "array",
+          "description": "Bounded list (max 200) of solved puzzle IDs."
+        },
+        "settings": {
+          "type": "object",
+          "description": "User UI, theme, sound, board, piece, and animation preferences."
+        },
+        "onlineStatus": {
+          "type": "string",
+          "enum": ["online", "offline", "in_game"]
+        },
+        "lastSeen": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "uid",
+        "username",
+        "usernameLower",
+        "displayName",
+        "email",
+        "photoURL",
+        "rating",
+        "gamesPlayed",
+        "wins",
+        "losses",
+        "draws",
+        "puzzlesSolved",
+        "puzzleRating",
+        "solvedPuzzleIds",
+        "settings",
+        "onlineStatus",
+        "lastSeen",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "PublicProfile": {
+      "title": "PublicProfile",
+      "description": "Non-PII public player card used for username search, friends lists, opponent display, and global leaderboard.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "username": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 24,
+          "pattern": "^[a-zA-Z0-9_]+$"
+        },
+        "usernameLower": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 24,
+          "pattern": "^[a-z0-9_]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "photoURL": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "rating": {
+          "type": "number"
+        },
+        "gamesPlayed": {
+          "type": "number"
+        },
+        "wins": {
+          "type": "number"
+        },
+        "losses": {
+          "type": "number"
+        },
+        "draws": {
+          "type": "number"
+        },
+        "puzzlesSolved": {
+          "type": "number"
+        },
+        "onlineStatus": {
+          "type": "string",
+          "enum": ["online", "offline", "in_game"]
+        },
+        "isPublic": {
+          "type": "boolean"
+        },
+        "lastSeen": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "uid",
+        "username",
+        "usernameLower",
+        "displayName",
+        "photoURL",
+        "rating",
+        "gamesPlayed",
+        "wins",
+        "losses",
+        "draws",
+        "puzzlesSolved",
+        "onlineStatus",
+        "isPublic",
+        "lastSeen",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "UsernameRegistry": {
+      "title": "UsernameRegistry",
+      "description": "Enforces global case-insensitive uniqueness for usernames.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "username": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 24,
+          "pattern": "^[a-zA-Z0-9_]+$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "username", "createdAt"]
+    },
+    "FriendRequest": {
+      "title": "FriendRequest",
+      "description": "Pending, accepted, or rejected friend request between two users.",
+      "type": "object",
+      "properties": {
+        "senderId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "senderUsername": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 24
+        },
+        "senderDisplayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "senderPhotoURL": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "senderRating": {
+          "type": "number"
+        },
+        "receiverId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "receiverUsername": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 24
+        },
+        "receiverDisplayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "receiverPhotoURL": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "receiverRating": {
+          "type": "number"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "accepted", "rejected"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "senderId",
+        "senderUsername",
+        "senderDisplayName",
+        "senderPhotoURL",
+        "senderRating",
+        "receiverId",
+        "receiverUsername",
+        "receiverDisplayName",
+        "receiverPhotoURL",
+        "receiverRating",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Friendship": {
+      "title": "Friendship",
+      "description": "Confirmed bidirectional friendship between two users.",
+      "type": "object",
+      "properties": {
+        "userIds": {
+          "type": "array",
+          "description": "Exactly 2 sorted UIDs."
+        },
+        "userA": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "userB": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["userIds", "userA", "userB", "createdAt"]
+    },
+    "MatchmakingEntry": {
+      "title": "MatchmakingEntry",
+      "description": "Real-time online matchmaking queue entry for automatic opponent pairing.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "username": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 24
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "photoURL": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "rating": {
+          "type": "number"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["waiting", "matched"]
+        },
+        "isOpen": {
+          "type": "boolean"
+        },
+        "matchId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "uid",
+        "username",
+        "displayName",
+        "photoURL",
+        "rating",
+        "status",
+        "isOpen",
+        "matchId",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "PrivateRoom": {
+      "title": "PrivateRoom",
+      "description": "Maps a 6-character invitation room code to a private untimed chess match.",
+      "type": "object",
+      "properties": {
+        "roomCode": {
+          "type": "string",
+          "minLength": 6,
+          "maxLength": 6,
+          "pattern": "^[A-Z0-9]{6}$"
+        },
+        "matchId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "hostId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "hostUsername": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 24
+        },
+        "status": {
+          "type": "string",
+          "enum": ["open", "joined", "cancelled"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "roomCode",
+        "matchId",
+        "hostId",
+        "hostUsername",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "MatchInvitation": {
+      "title": "MatchInvitation",
+      "description": "Direct match invitation from one user to a friend.",
+      "type": "object",
+      "properties": {
+        "senderId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "senderUsername": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 24
+        },
+        "senderDisplayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "senderPhotoURL": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "senderRating": {
+          "type": "number"
+        },
+        "receiverId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "receiverUsername": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 24
+        },
+        "receiverDisplayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "matchId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "senderColor": {
+          "type": "string",
+          "enum": ["white", "black", "random"]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "accepted", "rejected", "cancelled"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "senderId",
+        "senderUsername",
+        "senderDisplayName",
+        "senderPhotoURL",
+        "senderRating",
+        "receiverId",
+        "receiverUsername",
+        "receiverDisplayName",
+        "matchId",
+        "senderColor",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ChessMatch": {
+      "title": "ChessMatch",
+      "description": "Real-time untimed chess match state, move history, PGN, result, and rating deltas.",
+      "type": "object",
+      "properties": {
+        "matchId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["online", "friend", "private", "computer"]
+        },
+        "variant": {
+          "type": "string",
+          "enum": ["standard", "chess960"]
+        },
+        "initialFen": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "roomCode": {
+          "type": "string",
+          "maxLength": 6
+        },
+        "whiteId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "whiteUsername": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "whiteDisplayName": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "whitePhotoURL": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "whiteRating": {
+          "type": "number"
+        },
+        "blackId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "blackUsername": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "blackDisplayName": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "blackPhotoURL": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "blackRating": {
+          "type": "number"
+        },
+        "participants": {
+          "type": "array",
+          "description": "1 or 2 real authenticated player UIDs participating in the match."
+        },
+        "fen": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 128
+        },
+        "pgn": {
+          "type": "string",
+          "maxLength": 20000
+        },
+        "moves": {
+          "type": "array",
+          "description": "Bounded list (max 500) of SAN moves played."
+        },
+        "lastMoveFrom": {
+          "type": "string",
+          "maxLength": 2
+        },
+        "lastMoveTo": {
+          "type": "string",
+          "maxLength": 2
+        },
+        "turn": {
+          "type": "string",
+          "enum": ["w", "b"]
+        },
+        "moveCount": {
+          "type": "number"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["waiting", "active", "completed", "abandoned"]
+        },
+        "result": {
+          "type": "string",
+          "enum": ["", "1-0", "0-1", "1/2-1/2"]
+        },
+        "winnerId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "resultReason": {
+          "type": "string",
+          "enum": [
+            "",
+            "checkmate",
+            "stalemate",
+            "draw_agreement",
+            "threefold_repetition",
+            "fifty_move_rule",
+            "insufficient_material",
+            "resignation"
+          ]
+        },
+        "drawOfferBy": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "whiteRatingDelta": {
+          "type": "number"
+        },
+        "blackRatingDelta": {
+          "type": "number"
+        },
+        "whiteStatsApplied": {
+          "type": "boolean"
+        },
+        "blackStatsApplied": {
+          "type": "boolean"
+        },
+        "whiteLastSeen": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "blackLastSeen": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "completedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "matchId",
+        "mode",
+        "roomCode",
+        "whiteId",
+        "whiteUsername",
+        "whiteDisplayName",
+        "whitePhotoURL",
+        "whiteRating",
+        "blackId",
+        "blackUsername",
+        "blackDisplayName",
+        "blackPhotoURL",
+        "blackRating",
+        "participants",
+        "fen",
+        "pgn",
+        "moves",
+        "lastMoveFrom",
+        "lastMoveTo",
+        "turn",
+        "moveCount",
+        "status",
+        "result",
+        "winnerId",
+        "resultReason",
+        "drawOfferBy",
+        "whiteRatingDelta",
+        "blackRatingDelta",
+        "whiteStatsApplied",
+        "blackStatsApplied",
+        "whiteLastSeen",
+        "blackLastSeen",
+        "createdAt",
+        "updatedAt",
+        "completedAt"
+      ]
+    },
+    "UserProgression": {
+      "title": "UserProgression",
+      "description": "Owner-only progression profile tracking daily login rewards, streaks, XP, Arena Coins, Daily Puzzle streaks, Puzzle Rush best, and Board Vision best.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "xp": { "type": "number" },
+        "coins": { "type": "number" },
+        "currentStreak": { "type": "number" },
+        "longestStreak": { "type": "number" },
+        "lastRewardDate": { "type": "string", "maxLength": 10 },
+        "lastRewardDay": { "type": "number" },
+        "dailyPuzzleStreak": { "type": "number" },
+        "lastDailyPuzzleDate": { "type": "string", "maxLength": 10 },
+        "dailyPuzzlesCompleted": { "type": "number" },
+        "puzzleRushBest": { "type": "number" },
+        "visionBest": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "uid",
+        "xp",
+        "coins",
+        "currentStreak",
+        "longestStreak",
+        "lastRewardDate",
+        "lastRewardDay",
+        "dailyPuzzleStreak",
+        "lastDailyPuzzleDate",
+        "dailyPuzzlesCompleted",
+        "puzzleRushBest",
+        "visionBest",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": {
+      "schema": { "$ref": "#/entities/UserPrivateProfile" },
+      "description": "Owner-only private profile document storing email, settings, rating, stats, and puzzle progress."
+    },
+    "/userProgression/{uid}": {
+      "schema": { "$ref": "#/entities/UserProgression" },
+      "description": "Owner-only progression document storing daily check-in rewards, streaks, XP, coins, Puzzle Rush best, and Vision Trainer best."
+    },
+    "/publicProfiles/{uid}": {
+      "schema": { "$ref": "#/entities/PublicProfile" },
+      "description": "Public non-PII player profile used for username search, leaderboard, and friends display."
+    },
+    "/usernames/{usernameLower}": {
+      "schema": { "$ref": "#/entities/UsernameRegistry" },
+      "description": "Uniqueness registry mapping lowercase usernames to owner UIDs."
+    },
+    "/friendRequests/{requestId}": {
+      "schema": { "$ref": "#/entities/FriendRequest" },
+      "description": "Friend request documents scoped strictly to sender and receiver."
+    },
+    "/friendships/{friendshipId}": {
+      "schema": { "$ref": "#/entities/Friendship" },
+      "description": "Confirmed friendships between two users."
+    },
+    "/matchmakingQueue/{uid}": {
+      "schema": { "$ref": "#/entities/MatchmakingEntry" },
+      "description": "Real-time online opponent matchmaking queue."
+    },
+    "/privateRooms/{roomCode}": {
+      "schema": { "$ref": "#/entities/PrivateRoom" },
+      "description": "Private match room codes mapping to match documents."
+    },
+    "/matchInvitations/{invitationId}": {
+      "schema": { "$ref": "#/entities/MatchInvitation" },
+      "description": "Direct friend match invitations."
+    },
+    "/matches/{matchId}": {
+      "schema": { "$ref": "#/entities/ChessMatch" },
+      "description": "Live and completed untimed chess matches."
+    }
+  }
+}

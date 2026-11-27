@@ -1,0 +1,848 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global safety net: default deny everything
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // =========================================================================
+    // GLOBAL PRIMITIVES
+    // =========================================================================
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidUsernameId(id) {
+      return id is string && id.size() >= 3 && id.size() <= 24 && id.matches('^[a-z0-9_]+$');
+    }
+
+    function isValidRoomCode(code) {
+      return code is string && code.size() == 6 && code.matches('^[A-Z0-9]{6}$');
+    }
+
+    function isValidOnlineStatus(status) {
+      return status is string && (status == 'online' || status == 'offline' || status == 'in_game');
+    }
+
+    function isValidSettings(s) {
+      return s is map
+        && s.keys().hasAll(['theme', 'soundEnabled', 'boardTheme', 'pieceStyle', 'animationsEnabled'])
+        && s.keys().hasOnly(['theme', 'soundEnabled', 'boardTheme', 'pieceStyle', 'animationsEnabled'])
+        && s.theme is string && (s.theme == 'dark' || s.theme == 'light')
+        && s.soundEnabled is bool
+        && s.boardTheme is string && (s.boardTheme == 'classic' || s.boardTheme == 'walnut' || s.boardTheme == 'slate' || s.boardTheme == 'emerald')
+        && s.pieceStyle is string && (s.pieceStyle == 'neo' || s.pieceStyle == 'classic' || s.pieceStyle == 'minimal')
+        && s.animationsEnabled is bool;
+    }
+
+    // =========================================================================
+    // ENTITY VALIDATION BLUEPRINTS
+    // =========================================================================
+    function isValidUser(data) {
+      return data.keys().hasAll([
+          'uid', 'username', 'usernameLower', 'displayName', 'email', 'photoURL',
+          'rating', 'gamesPlayed', 'wins', 'losses', 'draws',
+          'puzzlesSolved', 'puzzleRating', 'solvedPuzzleIds', 'settings',
+          'onlineStatus', 'lastSeen', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'uid', 'username', 'usernameLower', 'displayName', 'email', 'photoURL',
+          'rating', 'gamesPlayed', 'wins', 'losses', 'draws',
+          'puzzlesSolved', 'puzzleRating', 'solvedPuzzleIds', 'settings',
+          'onlineStatus', 'lastSeen', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.uid)
+        && data.uid == request.auth.uid
+        && data.username is string && data.username.size() >= 3 && data.username.size() <= 24 && data.username.matches('^[a-zA-Z0-9_]+$')
+        && isValidUsernameId(data.usernameLower)
+        && data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 40
+        && data.email is string && data.email.size() <= 254
+        && data.photoURL is string && data.photoURL.size() <= 500
+        && data.rating is number && data.rating >= 100 && data.rating <= 3500
+        && data.gamesPlayed is int && data.gamesPlayed >= 0 && data.gamesPlayed <= 100000
+        && data.wins is int && data.wins >= 0 && data.wins <= 100000
+        && data.losses is int && data.losses >= 0 && data.losses <= 100000
+        && data.draws is int && data.draws >= 0 && data.draws <= 100000
+        && data.wins + data.losses + data.draws == data.gamesPlayed
+        && data.puzzlesSolved is int && data.puzzlesSolved >= 0 && data.puzzlesSolved <= 10000
+        && data.puzzleRating is number && data.puzzleRating >= 100 && data.puzzleRating <= 3500
+        && data.solvedPuzzleIds is list && data.solvedPuzzleIds.size() <= 200
+        && (data.solvedPuzzleIds.size() == 0 || data.solvedPuzzleIds[0] is string)
+        && isValidSettings(data.settings)
+        && isValidOnlineStatus(data.onlineStatus)
+        && data.lastSeen is timestamp
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidPublicProfile(data) {
+      return data.keys().hasAll([
+          'uid', 'username', 'usernameLower', 'displayName', 'photoURL',
+          'rating', 'gamesPlayed', 'wins', 'losses', 'draws',
+          'puzzlesSolved', 'onlineStatus', 'isPublic', 'lastSeen', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'uid', 'username', 'usernameLower', 'displayName', 'photoURL',
+          'rating', 'gamesPlayed', 'wins', 'losses', 'draws',
+          'puzzlesSolved', 'onlineStatus', 'isPublic', 'lastSeen', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.uid)
+        && data.uid == request.auth.uid
+        && data.username is string && data.username.size() >= 3 && data.username.size() <= 24 && data.username.matches('^[a-zA-Z0-9_]+$')
+        && isValidUsernameId(data.usernameLower)
+        && data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 40
+        && data.photoURL is string && data.photoURL.size() <= 500
+        && data.rating is number && data.rating >= 100 && data.rating <= 3500
+        && data.gamesPlayed is int && data.gamesPlayed >= 0 && data.gamesPlayed <= 100000
+        && data.wins is int && data.wins >= 0 && data.wins <= 100000
+        && data.losses is int && data.losses >= 0 && data.losses <= 100000
+        && data.draws is int && data.draws >= 0 && data.draws <= 100000
+        && data.wins + data.losses + data.draws == data.gamesPlayed
+        && data.puzzlesSolved is int && data.puzzlesSolved >= 0 && data.puzzlesSolved <= 10000
+        && isValidOnlineStatus(data.onlineStatus)
+        && data.isPublic is bool
+        && data.lastSeen is timestamp
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidUsernameDoc(data) {
+      return data.keys().hasAll(['uid', 'username', 'createdAt'])
+        && data.keys().hasOnly(['uid', 'username', 'createdAt'])
+        && isValidId(data.uid)
+        && data.uid == request.auth.uid
+        && data.username is string && data.username.size() >= 3 && data.username.size() <= 24 && data.username.matches('^[a-zA-Z0-9_]+$')
+        && data.createdAt is timestamp;
+    }
+
+    function isValidFriendRequest(data) {
+      return data.keys().hasAll([
+          'senderId', 'senderUsername', 'senderDisplayName', 'senderPhotoURL', 'senderRating',
+          'receiverId', 'receiverUsername', 'receiverDisplayName', 'receiverPhotoURL', 'receiverRating',
+          'status', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'senderId', 'senderUsername', 'senderDisplayName', 'senderPhotoURL', 'senderRating',
+          'receiverId', 'receiverUsername', 'receiverDisplayName', 'receiverPhotoURL', 'receiverRating',
+          'status', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.senderId)
+        && isValidId(data.receiverId)
+        && data.senderId != data.receiverId
+        && data.senderUsername is string && data.senderUsername.size() >= 3 && data.senderUsername.size() <= 24
+        && data.senderDisplayName is string && data.senderDisplayName.size() >= 1 && data.senderDisplayName.size() <= 40
+        && data.senderPhotoURL is string && data.senderPhotoURL.size() <= 500
+        && data.senderRating is number && data.senderRating >= 100 && data.senderRating <= 3500
+        && data.receiverUsername is string && data.receiverUsername.size() >= 3 && data.receiverUsername.size() <= 24
+        && data.receiverDisplayName is string && data.receiverDisplayName.size() >= 1 && data.receiverDisplayName.size() <= 40
+        && data.receiverPhotoURL is string && data.receiverPhotoURL.size() <= 500
+        && data.receiverRating is number && data.receiverRating >= 100 && data.receiverRating <= 3500
+        && data.status is string && (data.status == 'pending' || data.status == 'accepted' || data.status == 'rejected')
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidFriendship(data) {
+      return data.keys().hasAll(['userIds', 'userA', 'userB', 'createdAt'])
+        && data.keys().hasOnly(['userIds', 'userA', 'userB', 'createdAt'])
+        && data.userIds is list && data.userIds.size() == 2
+        && data.userIds[0] is string && data.userIds[1] is string
+        && isValidId(data.userA)
+        && isValidId(data.userB)
+        && data.userA != data.userB
+        && data.userIds[0] == data.userA
+        && data.userIds[1] == data.userB
+        && data.createdAt is timestamp;
+    }
+
+    function isValidQueueEntry(data) {
+      return data.keys().hasAll([
+          'uid', 'username', 'displayName', 'photoURL', 'rating',
+          'status', 'isOpen', 'matchId', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'uid', 'username', 'displayName', 'photoURL', 'rating',
+          'status', 'isOpen', 'matchId', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.uid)
+        && data.username is string && data.username.size() >= 3 && data.username.size() <= 24
+        && data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 40
+        && data.photoURL is string && data.photoURL.size() <= 500
+        && data.rating is number && data.rating >= 100 && data.rating <= 3500
+        && data.status is string && (data.status == 'waiting' || data.status == 'matched')
+        && data.isOpen is bool
+        && data.matchId is string && data.matchId.size() <= 128
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidPrivateRoom(data) {
+      return data.keys().hasAll(['roomCode', 'matchId', 'hostId', 'hostUsername', 'status', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['roomCode', 'matchId', 'hostId', 'hostUsername', 'status', 'createdAt', 'updatedAt'])
+        && isValidRoomCode(data.roomCode)
+        && isValidId(data.matchId)
+        && isValidId(data.hostId)
+        && data.hostUsername is string && data.hostUsername.size() >= 3 && data.hostUsername.size() <= 24
+        && data.status is string && (data.status == 'open' || data.status == 'joined' || data.status == 'cancelled')
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidMatchInvitation(data) {
+      return data.keys().hasAll([
+          'senderId', 'senderUsername', 'senderDisplayName', 'senderPhotoURL', 'senderRating',
+          'receiverId', 'receiverUsername', 'receiverDisplayName', 'matchId',
+          'senderColor', 'status', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'senderId', 'senderUsername', 'senderDisplayName', 'senderPhotoURL', 'senderRating',
+          'receiverId', 'receiverUsername', 'receiverDisplayName', 'matchId',
+          'senderColor', 'status', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.senderId)
+        && isValidId(data.receiverId)
+        && data.senderId != data.receiverId
+        && data.senderUsername is string && data.senderUsername.size() >= 3 && data.senderUsername.size() <= 24
+        && data.senderDisplayName is string && data.senderDisplayName.size() >= 1 && data.senderDisplayName.size() <= 40
+        && data.senderPhotoURL is string && data.senderPhotoURL.size() <= 500
+        && data.senderRating is number && data.senderRating >= 100 && data.senderRating <= 3500
+        && data.receiverUsername is string && data.receiverUsername.size() >= 3 && data.receiverUsername.size() <= 24
+        && data.receiverDisplayName is string && data.receiverDisplayName.size() >= 1 && data.receiverDisplayName.size() <= 40
+        && data.matchId is string && data.matchId.size() <= 128
+        && data.senderColor is string && (data.senderColor == 'white' || data.senderColor == 'black' || data.senderColor == 'random')
+        && data.status is string && (data.status == 'pending' || data.status == 'accepted' || data.status == 'rejected' || data.status == 'cancelled')
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidMatch(data) {
+      return data.keys().hasAll([
+          'matchId', 'mode', 'roomCode',
+          'whiteId', 'whiteUsername', 'whiteDisplayName', 'whitePhotoURL', 'whiteRating',
+          'blackId', 'blackUsername', 'blackDisplayName', 'blackPhotoURL', 'blackRating',
+          'participants', 'fen', 'pgn', 'moves', 'lastMoveFrom', 'lastMoveTo',
+          'turn', 'moveCount', 'status', 'result', 'winnerId', 'resultReason',
+          'drawOfferBy', 'whiteRatingDelta', 'blackRatingDelta',
+          'whiteStatsApplied', 'blackStatsApplied',
+          'whiteLastSeen', 'blackLastSeen', 'createdAt', 'updatedAt', 'completedAt'
+        ])
+        && data.keys().hasOnly([
+          'matchId', 'mode', 'variant', 'initialFen', 'roomCode',
+          'whiteId', 'whiteUsername', 'whiteDisplayName', 'whitePhotoURL', 'whiteRating',
+          'blackId', 'blackUsername', 'blackDisplayName', 'blackPhotoURL', 'blackRating',
+          'participants', 'fen', 'pgn', 'moves', 'lastMoveFrom', 'lastMoveTo',
+          'turn', 'moveCount', 'status', 'result', 'winnerId', 'resultReason',
+          'drawOfferBy', 'whiteRatingDelta', 'blackRatingDelta',
+          'whiteStatsApplied', 'blackStatsApplied',
+          'whiteLastSeen', 'blackLastSeen', 'createdAt', 'updatedAt', 'completedAt'
+        ])
+        && isValidId(data.matchId)
+        && data.mode is string && (data.mode == 'online' || data.mode == 'friend' || data.mode == 'private' || data.mode == 'computer')
+        && (!('variant' in data) || (data.variant is string && (data.variant == 'standard' || data.variant == 'chess960')))
+        && (!('initialFen' in data) || (data.initialFen is string && data.initialFen.size() <= 128))
+        && data.roomCode is string && data.roomCode.size() <= 6
+        && data.whiteId is string && data.whiteId.size() <= 128
+        && data.whiteUsername is string && data.whiteUsername.size() <= 40
+        && data.whiteDisplayName is string && data.whiteDisplayName.size() <= 40
+        && data.whitePhotoURL is string && data.whitePhotoURL.size() <= 500
+        && data.whiteRating is number && data.whiteRating >= 100 && data.whiteRating <= 3500
+        && data.blackId is string && data.blackId.size() <= 128
+        && data.blackUsername is string && data.blackUsername.size() <= 40
+        && data.blackDisplayName is string && data.blackDisplayName.size() <= 40
+        && data.blackPhotoURL is string && data.blackPhotoURL.size() <= 500
+        && data.blackRating is number && data.blackRating >= 100 && data.blackRating <= 3500
+        && data.participants is list && data.participants.size() >= 1 && data.participants.size() <= 2
+        && data.participants[0] is string
+        && data.fen is string && data.fen.size() >= 10 && data.fen.size() <= 128
+        && data.pgn is string && data.pgn.size() <= 20000
+        && data.moves is list && data.moves.size() <= 500
+        && (data.moves.size() == 0 || data.moves[0] is string)
+        && data.lastMoveFrom is string && data.lastMoveFrom.size() <= 2
+        && data.lastMoveTo is string && data.lastMoveTo.size() <= 2
+        && data.turn is string && (data.turn == 'w' || data.turn == 'b')
+        && data.moveCount is int && data.moveCount >= 0 && data.moveCount <= 500
+        && data.status is string && (data.status == 'waiting' || data.status == 'active' || data.status == 'completed' || data.status == 'abandoned')
+        && data.result is string && (data.result == '' || data.result == '1-0' || data.result == '0-1' || data.result == '1/2-1/2')
+        && data.winnerId is string && data.winnerId.size() <= 128
+        && data.resultReason is string && (
+          data.resultReason == '' || data.resultReason == 'checkmate' || data.resultReason == 'stalemate'
+          || data.resultReason == 'draw_agreement' || data.resultReason == 'threefold_repetition'
+          || data.resultReason == 'fifty_move_rule' || data.resultReason == 'insufficient_material'
+          || data.resultReason == 'resignation'
+        )
+        && data.drawOfferBy is string && data.drawOfferBy.size() <= 128
+        && data.whiteRatingDelta is number && data.whiteRatingDelta >= -64 && data.whiteRatingDelta <= 64
+        && data.blackRatingDelta is number && data.blackRatingDelta >= -64 && data.blackRatingDelta <= 64
+        && data.whiteStatsApplied is bool
+        && data.blackStatsApplied is bool
+        && data.whiteLastSeen is timestamp
+        && data.blackLastSeen is timestamp
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp
+        && (data.completedAt == null || data.completedAt is timestamp);
+    }
+
+    function isValidDateKey(val) {
+      return val is string && (val == '' || (val.size() == 10 && val.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')));
+    }
+
+    function isValidUserProgression(data) {
+      return data.keys().hasAll([
+          'uid', 'xp', 'coins', 'currentStreak', 'longestStreak',
+          'lastRewardDate', 'lastRewardDay', 'dailyPuzzleStreak',
+          'lastDailyPuzzleDate', 'dailyPuzzlesCompleted',
+          'puzzleRushBest', 'visionBest', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'uid', 'xp', 'coins', 'currentStreak', 'longestStreak',
+          'lastRewardDate', 'lastRewardDay', 'dailyPuzzleStreak',
+          'lastDailyPuzzleDate', 'dailyPuzzlesCompleted',
+          'puzzleRushBest', 'visionBest', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.uid)
+        && data.uid == request.auth.uid
+        && data.xp is int && data.xp >= 0 && data.xp <= 10000000
+        && data.coins is int && data.coins >= 0 && data.coins <= 10000000
+        && data.currentStreak is int && data.currentStreak >= 0 && data.currentStreak <= 10000
+        && data.longestStreak is int && data.longestStreak >= 0 && data.longestStreak <= 10000
+        && data.longestStreak >= data.currentStreak
+        && isValidDateKey(data.lastRewardDate)
+        && data.lastRewardDay is int && data.lastRewardDay >= 0 && data.lastRewardDay <= 7
+        && data.dailyPuzzleStreak is int && data.dailyPuzzleStreak >= 0 && data.dailyPuzzleStreak <= 10000
+        && isValidDateKey(data.lastDailyPuzzleDate)
+        && data.dailyPuzzlesCompleted is int && data.dailyPuzzlesCompleted >= 0 && data.dailyPuzzlesCompleted <= 10000
+        && data.puzzleRushBest is int && data.puzzleRushBest >= 0 && data.puzzleRushBest <= 200
+        && data.visionBest is int && data.visionBest >= 0 && data.visionBest <= 200
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // =========================================================================
+    // COLLECTION RULES
+    // =========================================================================
+
+    // 1. Private User Profile (PII isolated to owner)
+    match /users/{uid} {
+      allow get: if isValidId(uid) && isOwner(uid);
+      allow list: if false;
+      allow create: if isVerified()
+        && isValidId(uid)
+        && isOwner(uid)
+        && isValidUser(incoming())
+        && incoming().uid == uid
+        && incoming().rating == 1200
+        && incoming().gamesPlayed == 0
+        && incoming().wins == 0
+        && incoming().losses == 0
+        && incoming().draws == 0
+        && incoming().puzzlesSolved == 0
+        && incoming().puzzleRating == 1000
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isVerified()
+        && isValidId(uid)
+        && isOwner(uid)
+        && isValidUser(incoming())
+        && incoming().uid == existing().uid
+        && incoming().email == existing().email
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          // Action: Edit profile metadata
+          incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'username', 'usernameLower', 'photoURL', 'updatedAt'])
+          // Action: Edit preferences
+          || incoming().diff(existing()).affectedKeys().hasOnly(['settings', 'updatedAt'])
+          // Action: Presence heartbeat
+          || incoming().diff(existing()).affectedKeys().hasOnly(['onlineStatus', 'lastSeen', 'updatedAt'])
+          // Action: Apply match rating & stat delta
+          || (
+            incoming().diff(existing()).affectedKeys().hasOnly(['rating', 'gamesPlayed', 'wins', 'losses', 'draws', 'updatedAt'])
+            && incoming().gamesPlayed == existing().gamesPlayed + 1
+            && incoming().wins >= existing().wins
+            && incoming().losses >= existing().losses
+            && incoming().draws >= existing().draws
+            && incoming().rating - existing().rating <= 64
+            && existing().rating - incoming().rating <= 64
+          )
+          // Action: Apply puzzle progress
+          || (
+            incoming().diff(existing()).affectedKeys().hasOnly(['puzzlesSolved', 'puzzleRating', 'solvedPuzzleIds', 'updatedAt'])
+            && incoming().puzzlesSolved >= existing().puzzlesSolved
+            && incoming().puzzlesSolved <= existing().puzzlesSolved + 1
+          )
+        );
+      allow delete: if false;
+    }
+
+    // 2. Public Profiles (Non-PII, used for leaderboard, search, friends)
+    match /publicProfiles/{uid} {
+      allow get: if isSignedIn() && isValidId(uid);
+      allow list: if isSignedIn() && resource.data.isPublic == true;
+      allow create: if isVerified()
+        && isValidId(uid)
+        && isOwner(uid)
+        && isValidPublicProfile(incoming())
+        && incoming().uid == uid
+        && incoming().isPublic == true
+        && incoming().rating == 1200
+        && incoming().gamesPlayed == 0
+        && incoming().wins == 0
+        && incoming().losses == 0
+        && incoming().draws == 0
+        && incoming().puzzlesSolved == 0
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isVerified()
+        && isValidId(uid)
+        && isOwner(uid)
+        && isValidPublicProfile(incoming())
+        && incoming().uid == existing().uid
+        && incoming().isPublic == existing().isPublic
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'username', 'usernameLower', 'photoURL', 'updatedAt'])
+          || incoming().diff(existing()).affectedKeys().hasOnly(['onlineStatus', 'lastSeen', 'updatedAt'])
+          || (
+            incoming().diff(existing()).affectedKeys().hasOnly(['rating', 'gamesPlayed', 'wins', 'losses', 'draws', 'updatedAt'])
+            && incoming().gamesPlayed == existing().gamesPlayed + 1
+            && incoming().wins >= existing().wins
+            && incoming().losses >= existing().losses
+            && incoming().draws >= existing().draws
+            && incoming().rating - existing().rating <= 64
+            && existing().rating - incoming().rating <= 64
+          )
+          || (
+            incoming().diff(existing()).affectedKeys().hasOnly(['puzzlesSolved', 'updatedAt'])
+            && incoming().puzzlesSolved >= existing().puzzlesSolved
+            && incoming().puzzlesSolved <= existing().puzzlesSolved + 1
+          )
+        );
+      allow delete: if false;
+    }
+
+    // 3. Username Uniqueness Registry
+    match /usernames/{usernameLower} {
+      allow get: if isSignedIn() && isValidUsernameId(usernameLower);
+      allow list: if false;
+      allow create: if isVerified()
+        && isValidUsernameId(usernameLower)
+        && isValidUsernameDoc(incoming())
+        && incoming().uid == request.auth.uid
+        && incoming().createdAt == request.time;
+      allow update: if false;
+      allow delete: if isVerified()
+        && isValidUsernameId(usernameLower)
+        && existing().uid == request.auth.uid;
+    }
+
+    // 4. Friend Requests
+    match /friendRequests/{requestId} {
+      allow get: if isSignedIn() && isValidId(requestId)
+        && (existing().senderId == request.auth.uid || existing().receiverId == request.auth.uid);
+      allow list: if isSignedIn()
+        && (resource.data.senderId == request.auth.uid || resource.data.receiverId == request.auth.uid);
+      allow create: if isVerified()
+        && isValidId(requestId)
+        && isValidFriendRequest(incoming())
+        && incoming().senderId == request.auth.uid
+        && incoming().status == 'pending'
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && exists(/databases/$(database)/documents/publicProfiles/$(incoming().receiverId));
+      allow update: if isVerified()
+        && isValidId(requestId)
+        && isValidFriendRequest(incoming())
+        && existing().status == 'pending'
+        && existing().receiverId == request.auth.uid
+        && incoming().senderId == existing().senderId
+        && incoming().receiverId == existing().receiverId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])
+        && (incoming().status == 'accepted' || incoming().status == 'rejected');
+      allow delete: if isVerified()
+        && isValidId(requestId)
+        && (existing().senderId == request.auth.uid || existing().receiverId == request.auth.uid);
+    }
+
+    // 5. Friendships
+    match /friendships/{friendshipId} {
+      allow get: if isSignedIn() && isValidId(friendshipId)
+        && (existing().userA == request.auth.uid || existing().userB == request.auth.uid);
+      allow list: if isSignedIn()
+        && (request.auth.uid in resource.data.userIds);
+      allow create: if isVerified()
+        && isValidId(friendshipId)
+        && isValidFriendship(incoming())
+        && (incoming().userA == request.auth.uid || incoming().userB == request.auth.uid)
+        && incoming().createdAt == request.time
+        && (
+          existsAfter(/databases/$(database)/documents/friendRequests/$(incoming().userA + '_' + incoming().userB))
+          || existsAfter(/databases/$(database)/documents/friendRequests/$(incoming().userB + '_' + incoming().userA))
+        );
+      allow update: if false;
+      allow delete: if isVerified()
+        && isValidId(friendshipId)
+        && (existing().userA == request.auth.uid || existing().userB == request.auth.uid);
+    }
+
+    // 6. Real-Time Online Matchmaking Queue
+    match /matchmakingQueue/{uid} {
+      allow get: if isSignedIn() && isValidId(uid);
+      allow list: if isSignedIn() && resource.data.isOpen == true && resource.data.status == 'waiting';
+      allow create: if isVerified()
+        && isValidId(uid)
+        && isOwner(uid)
+        && isValidQueueEntry(incoming())
+        && incoming().uid == uid
+        && incoming().status == 'waiting'
+        && incoming().isOpen == true
+        && incoming().matchId == ''
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerified()
+        && isValidId(uid)
+        && isValidQueueEntry(incoming())
+        && existing().status == 'waiting'
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && request.auth.uid != existing().uid
+        && incoming().status == 'matched'
+        && incoming().isOpen == false
+        && incoming().matchId.size() > 0
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'isOpen', 'matchId', 'updatedAt'])
+        && existsAfter(/databases/$(database)/documents/matches/$(incoming().matchId));
+      allow delete: if isVerified() && isValidId(uid) && isOwner(uid);
+    }
+
+    // 7. Private Match Room Codes
+    match /privateRooms/{roomCode} {
+      allow get: if isSignedIn() && isValidRoomCode(roomCode);
+      allow list: if false;
+      allow create: if isVerified()
+        && isValidRoomCode(roomCode)
+        && isValidPrivateRoom(incoming())
+        && incoming().roomCode == roomCode
+        && incoming().hostId == request.auth.uid
+        && incoming().status == 'open'
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && existsAfter(/databases/$(database)/documents/matches/$(incoming().matchId));
+      allow update: if isVerified()
+        && isValidRoomCode(roomCode)
+        && isValidPrivateRoom(incoming())
+        && existing().status == 'open'
+        && incoming().roomCode == existing().roomCode
+        && incoming().matchId == existing().matchId
+        && incoming().hostId == existing().hostId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])
+        && (
+          (request.auth.uid == existing().hostId && incoming().status == 'cancelled')
+          || (request.auth.uid != existing().hostId && incoming().status == 'joined')
+        );
+      allow delete: if isVerified() && isValidRoomCode(roomCode) && existing().hostId == request.auth.uid;
+    }
+
+    // 8. Match Invitations
+    match /matchInvitations/{invitationId} {
+      allow get: if isSignedIn() && isValidId(invitationId)
+        && (existing().senderId == request.auth.uid || existing().receiverId == request.auth.uid);
+      allow list: if isSignedIn()
+        && (resource.data.senderId == request.auth.uid || resource.data.receiverId == request.auth.uid);
+      allow create: if isVerified()
+        && isValidId(invitationId)
+        && isValidMatchInvitation(incoming())
+        && incoming().senderId == request.auth.uid
+        && incoming().status == 'pending'
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && exists(/databases/$(database)/documents/publicProfiles/$(incoming().receiverId));
+      allow update: if isVerified()
+        && isValidId(invitationId)
+        && isValidMatchInvitation(incoming())
+        && existing().status == 'pending'
+        && incoming().senderId == existing().senderId
+        && incoming().receiverId == existing().receiverId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          (
+            existing().receiverId == request.auth.uid
+            && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'matchId', 'updatedAt'])
+            && (incoming().status == 'accepted' || incoming().status == 'rejected')
+          )
+          || (
+            existing().senderId == request.auth.uid
+            && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])
+            && incoming().status == 'cancelled'
+          )
+        );
+      allow delete: if isVerified()
+        && isValidId(invitationId)
+        && (existing().senderId == request.auth.uid || existing().receiverId == request.auth.uid);
+    }
+
+    // 9. Chess Matches (Real-time untimed multiplayer + history)
+    match /matches/{matchId} {
+      allow get: if isSignedIn() && isValidId(matchId)
+        && (
+          (request.auth.uid in existing().participants)
+          || existing().status == 'waiting'
+          || existing().status == 'completed'
+        );
+      allow list: if isSignedIn()
+        && (
+          (request.auth.uid in resource.data.participants)
+          || resource.data.status == 'completed'
+        );
+      allow create: if isVerified()
+        && isValidId(matchId)
+        && isValidMatch(incoming())
+        && incoming().matchId == matchId
+        && (request.auth.uid in incoming().participants)
+        && (incoming().whiteId == request.auth.uid || incoming().blackId == request.auth.uid)
+        && (incoming().status == 'waiting' || incoming().status == 'active')
+        && incoming().result == ''
+        && incoming().winnerId == ''
+        && incoming().completedAt == null
+        && incoming().moveCount == 0
+        && incoming().whiteStatsApplied == false
+        && incoming().blackStatsApplied == false
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isVerified()
+        && isValidId(matchId)
+        && isValidMatch(incoming())
+        && incoming().matchId == existing().matchId
+        && incoming().mode == existing().mode
+        && incoming().get('variant', 'standard') == existing().get('variant', 'standard')
+        && incoming().get('initialFen', '') == existing().get('initialFen', '')
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          // Action A: Second player joins a waiting private room
+          (
+            existing().status == 'waiting'
+            && incoming().status == 'active'
+            && !(request.auth.uid in existing().participants)
+            && (request.auth.uid in incoming().participants)
+            && (existing().participants[0] in incoming().participants)
+            && incoming().participants.size() == 2
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'whiteId', 'whiteUsername', 'whiteDisplayName', 'whitePhotoURL', 'whiteRating',
+              'blackId', 'blackUsername', 'blackDisplayName', 'blackPhotoURL', 'blackRating',
+              'participants', 'status', 'whiteLastSeen', 'blackLastSeen', 'updatedAt'
+            ])
+          )
+          // Action B: Active player submits a validated move
+          || (
+            existing().status == 'active'
+            && (request.auth.uid in existing().participants)
+            && (
+              (existing().turn == 'w' && existing().whiteId == request.auth.uid)
+              || (existing().turn == 'b' && existing().blackId == request.auth.uid)
+              || existing().mode == 'computer'
+            )
+            && incoming().turn != existing().turn
+            && incoming().moveCount == existing().moveCount + 1
+            && (incoming().status != 'completed' || incoming().completedAt == request.time)
+            && incoming().whiteId == existing().whiteId
+            && incoming().blackId == existing().blackId
+            && incoming().participants == existing().participants
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'fen', 'pgn', 'moves', 'lastMoveFrom', 'lastMoveTo',
+              'turn', 'moveCount', 'status', 'result', 'winnerId', 'resultReason',
+              'drawOfferBy', 'whiteRatingDelta', 'blackRatingDelta',
+              'completedAt', 'whiteLastSeen', 'blackLastSeen', 'updatedAt'
+            ])
+          )
+          // Action C: Offer or decline draw
+          || (
+            existing().status == 'active'
+            && (request.auth.uid in existing().participants)
+            && incoming().whiteId == existing().whiteId
+            && incoming().blackId == existing().blackId
+            && incoming().participants == existing().participants
+            && incoming().diff(existing()).affectedKeys().hasOnly(['drawOfferBy', 'updatedAt'])
+            && (incoming().drawOfferBy == request.auth.uid || incoming().drawOfferBy == '')
+          )
+          // Action D: Accept opponent's draw offer OR resign own side
+          || (
+            existing().status == 'active'
+            && (request.auth.uid in existing().participants)
+            && incoming().status == 'completed'
+            && incoming().completedAt == request.time
+            && incoming().whiteId == existing().whiteId
+            && incoming().blackId == existing().blackId
+            && incoming().participants == existing().participants
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'status', 'result', 'winnerId', 'resultReason', 'drawOfferBy',
+              'whiteRatingDelta', 'blackRatingDelta', 'completedAt', 'updatedAt'
+            ])
+            && (
+              (
+                incoming().resultReason == 'draw_agreement'
+                && existing().drawOfferBy != ''
+                && existing().drawOfferBy != request.auth.uid
+                && incoming().result == '1/2-1/2'
+                && incoming().winnerId == ''
+              )
+              || (
+                incoming().resultReason == 'resignation'
+                && (
+                  (request.auth.uid == existing().whiteId && incoming().result == '0-1' && incoming().winnerId == existing().blackId)
+                  || (request.auth.uid == existing().blackId && incoming().result == '1-0' && incoming().winnerId == existing().whiteId)
+                )
+              )
+            )
+          )
+          // Action E: Presence heartbeat inside match
+          || (
+            (existing().status == 'active' || existing().status == 'waiting')
+            && (request.auth.uid in existing().participants)
+            && (
+              (request.auth.uid == existing().whiteId && incoming().diff(existing()).affectedKeys().hasOnly(['whiteLastSeen', 'updatedAt']))
+              || (request.auth.uid == existing().blackId && incoming().diff(existing()).affectedKeys().hasOnly(['blackLastSeen', 'updatedAt']))
+            )
+          )
+          // Action F: Host cancels waiting private room
+          || (
+            existing().status == 'waiting'
+            && (request.auth.uid in existing().participants)
+            && incoming().status == 'abandoned'
+            && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])
+          )
+          // Action G: Terminal state lock — only own statsApplied flag may flip false -> true
+          || (
+            existing().status == 'completed'
+            && (
+              (
+                request.auth.uid == existing().whiteId
+                && existing().whiteStatsApplied == false
+                && incoming().whiteStatsApplied == true
+                && incoming().diff(existing()).affectedKeys().hasOnly(['whiteStatsApplied', 'updatedAt'])
+              )
+              || (
+                request.auth.uid == existing().blackId
+                && existing().blackStatsApplied == false
+                && incoming().blackStatsApplied == true
+                && incoming().diff(existing()).affectedKeys().hasOnly(['blackStatsApplied', 'updatedAt'])
+              )
+            )
+          )
+        );
+      allow delete: if false;
+    }
+
+    // 10. User Progression (Daily Rewards, Streaks, Daily Puzzle, Rush & Vision Bests)
+    match /userProgression/{uid} {
+      allow get: if isValidId(uid) && isOwner(uid);
+      allow list: if false;
+      allow create: if isVerified()
+        && isValidId(uid)
+        && isOwner(uid)
+        && isValidUserProgression(incoming())
+        && incoming().uid == uid
+        && incoming().xp == 0
+        && incoming().coins == 0
+        && incoming().currentStreak == 0
+        && incoming().longestStreak == 0
+        && incoming().lastRewardDate == ''
+        && incoming().lastRewardDay == 0
+        && incoming().dailyPuzzleStreak == 0
+        && incoming().lastDailyPuzzleDate == ''
+        && incoming().dailyPuzzlesCompleted == 0
+        && incoming().puzzleRushBest == 0
+        && incoming().visionBest == 0
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isVerified()
+        && isValidId(uid)
+        && isOwner(uid)
+        && isValidUserProgression(incoming())
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          // Action 1: Claim daily check-in reward
+          (
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'xp', 'coins', 'currentStreak', 'longestStreak', 'lastRewardDate', 'lastRewardDay', 'updatedAt'
+            ])
+            && incoming().lastRewardDate != ''
+            && incoming().lastRewardDate != existing().lastRewardDate
+            && incoming().xp >= existing().xp
+            && incoming().xp <= existing().xp + 500
+            && incoming().coins >= existing().coins
+            && incoming().coins <= existing().coins + 500
+            && incoming().currentStreak >= 1
+            && incoming().currentStreak <= existing().currentStreak + 1
+            && incoming().longestStreak >= existing().longestStreak
+            && incoming().lastRewardDay >= 1
+            && incoming().lastRewardDay <= 7
+          )
+          // Action 2: Record Daily Puzzle completion
+          || (
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'xp', 'coins', 'dailyPuzzleStreak', 'lastDailyPuzzleDate', 'dailyPuzzlesCompleted', 'updatedAt'
+            ])
+            && incoming().lastDailyPuzzleDate != ''
+            && incoming().lastDailyPuzzleDate != existing().lastDailyPuzzleDate
+            && incoming().dailyPuzzlesCompleted == existing().dailyPuzzlesCompleted + 1
+            && incoming().dailyPuzzleStreak >= 1
+            && incoming().dailyPuzzleStreak <= existing().dailyPuzzleStreak + 1
+            && incoming().xp >= existing().xp
+            && incoming().xp <= existing().xp + 250
+            && incoming().coins >= existing().coins
+            && incoming().coins <= existing().coins + 250
+          )
+          // Action 3: Record new Puzzle Rush high score
+          || (
+            incoming().diff(existing()).affectedKeys().hasOnly(['puzzleRushBest', 'xp', 'updatedAt'])
+            && incoming().puzzleRushBest > existing().puzzleRushBest
+            && incoming().xp >= existing().xp
+            && incoming().xp <= existing().xp + 200
+          )
+          // Action 4: Record new Board Vision high score
+          || (
+            incoming().diff(existing()).affectedKeys().hasOnly(['visionBest', 'xp', 'updatedAt'])
+            && incoming().visionBest > existing().visionBest
+            && incoming().xp >= existing().xp
+            && incoming().xp <= existing().xp + 200
+          )
+        );
+      allow delete: if false;
+    }
+  }
+}

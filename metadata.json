@@ -1,0 +1,6 @@
+{
+  "name": "Chess Arena",
+  "description": "Online multiplayer chess platform with real-time untimed matches, computer opponents, tactical puzzles, friends, and global leaderboards.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
