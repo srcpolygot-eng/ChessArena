@@ -148,7 +148,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
         </div>
 
         {/* Section Tabs */}
-        <div className="flex items-center gap-1 p-1 rounded-lg bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D]">
+        <div className="flex items-center gap-1 p-1 rounded-lg bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37]">
           <button
             type="button"
             onClick={() => setTab('friends')}
@@ -201,7 +201,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
 
       {/* FRIENDS LIST TAB */}
       {tab === 'friends' && (
-        <section className="bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl p-5">
+        <section className="bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] rounded-xl p-5">
           {friends.length === 0 ? (
             <div className="py-12 text-center">
               <Users className="w-8 h-8 text-slate-400 mx-auto mb-3" />
@@ -212,13 +212,13 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               <button
                 type="button"
                 onClick={() => setTab('find')}
-                className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer"
+                className="px-4 py-2 rounded-lg btn-chess-primary text-xs font-semibold cursor-pointer"
               >
                 Find Players by Username
               </button>
             </div>
           ) : (
-            <div className="divide-y divide-slate-100 dark:divide-[#242A35]">
+            <div className="divide-y divide-slate-100 dark:divide-[#353330]">
               {friends.map((friend) => (
                 <div
                   key={friend.uid}
@@ -255,7 +255,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                     <button
                       type="button"
                       onClick={() => onChallengeFriend(friend)}
-                      className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                      className="px-3.5 py-2 rounded-lg btn-chess-primary text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
                     >
                       <Swords className="w-3.5 h-3.5" />
                       Challenge
@@ -274,7 +274,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                         <button
                           type="button"
                           onClick={() => setConfirmRemoveUid(null)}
-                          className="px-2 py-2 rounded-lg bg-slate-200 dark:bg-[#222833] text-slate-700 dark:text-slate-300 text-xs cursor-pointer"
+                          className="px-2 py-2 rounded-lg bg-slate-200 dark:bg-[#312F2C] text-slate-700 dark:text-slate-300 text-xs cursor-pointer"
                         >
                           Cancel
                         </button>
@@ -284,7 +284,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                         type="button"
                         onClick={() => setConfirmRemoveUid(friend.uid)}
                         title="Remove friend"
-                        className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-slate-100 dark:hover:bg-[#222833] transition-colors cursor-pointer"
+                        className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-slate-100 dark:hover:bg-[#312F2C] transition-colors cursor-pointer"
                       >
                         <UserMinus className="w-4 h-4" />
                       </button>
@@ -300,7 +300,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
       {/* FRIEND REQUESTS TAB */}
       {tab === 'requests' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <section className="bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl p-5 space-y-4">
+          <section className="bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] rounded-xl p-5 space-y-4">
             <h2 className="font-display text-base font-bold text-slate-900 dark:text-white">
               Incoming Requests ({incomingRequests.length})
             </h2>
@@ -313,7 +313,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                 {incomingRequests.map((req) => (
                   <div
                     key={req.id}
-                    className="p-3.5 rounded-lg bg-slate-50 dark:bg-[#14181F] border border-slate-200 dark:border-[#2A313D] flex items-center justify-between gap-3"
+                    className="p-3.5 rounded-lg bg-slate-50 dark:bg-[#1F1E1B] border border-slate-200 dark:border-[#3C3A37] flex items-center justify-between gap-3"
                   >
                     <button
                       type="button"
@@ -333,7 +333,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                         type="button"
                         disabled={busyId === req.id}
                         onClick={() => handleAccept(req)}
-                        className="px-3 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer"
+                        className="px-3 py-1.5 rounded-md btn-chess-primary text-xs font-semibold cursor-pointer"
                       >
                         Accept
                       </button>
@@ -341,7 +341,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                         type="button"
                         disabled={busyId === req.id}
                         onClick={() => handleReject(req.id)}
-                        className="px-2.5 py-1.5 rounded-md bg-slate-200 dark:bg-[#222833] text-slate-700 dark:text-slate-300 text-xs font-medium cursor-pointer"
+                        className="px-2.5 py-1.5 rounded-md bg-slate-200 dark:bg-[#312F2C] text-slate-700 dark:text-slate-300 text-xs font-medium cursor-pointer"
                       >
                         Reject
                       </button>
@@ -352,7 +352,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
             )}
           </section>
 
-          <section className="bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl p-5 space-y-4">
+          <section className="bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] rounded-xl p-5 space-y-4">
             <h2 className="font-display text-base font-bold text-slate-900 dark:text-white">
               Sent Requests ({outgoingRequests.length})
             </h2>
@@ -365,7 +365,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                 {outgoingRequests.map((req) => (
                   <div
                     key={req.id}
-                    className="p-3.5 rounded-lg bg-slate-50 dark:bg-[#14181F] border border-slate-200 dark:border-[#2A313D] flex items-center justify-between gap-3"
+                    className="p-3.5 rounded-lg bg-slate-50 dark:bg-[#1F1E1B] border border-slate-200 dark:border-[#3C3A37] flex items-center justify-between gap-3"
                   >
                     <button
                       type="button"
@@ -386,7 +386,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                       type="button"
                       disabled={busyId === req.id}
                       onClick={() => handleCancel(req.id)}
-                      className="p-1.5 rounded-md text-slate-400 hover:text-red-500 hover:bg-slate-200 dark:hover:bg-[#222833] cursor-pointer"
+                      className="p-1.5 rounded-md text-slate-400 hover:text-red-500 hover:bg-slate-200 dark:hover:bg-[#312F2C] cursor-pointer"
                       title="Cancel request"
                     >
                       <X className="w-4 h-4" />
@@ -401,7 +401,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
 
       {/* FIND PLAYERS TAB */}
       {tab === 'find' && (
-        <section className="bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl p-6 space-y-5">
+        <section className="bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] rounded-xl p-6 space-y-5">
           <div>
             <h2 className="font-display text-base font-bold text-slate-900 dark:text-white">
               Search Players by Username
@@ -419,13 +419,13 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Enter username or display name..."
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-slate-50 dark:bg-[#12151A] border border-slate-200 dark:border-[#2A313D] text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-slate-50 dark:bg-[#1F1E1B] border border-slate-200 dark:border-[#3C3A37] text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
               />
             </div>
             <button
               type="submit"
               disabled={searching}
-              className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold transition-colors cursor-pointer"
+              className="px-5 py-2.5 rounded-lg btn-chess-primary text-sm font-semibold transition-colors cursor-pointer"
             >
               {searching ? 'Searching...' : 'Search'}
             </button>
@@ -438,7 +438,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
           )}
 
           {searchResults.length > 0 && (
-            <div className="divide-y divide-slate-100 dark:divide-[#242A35]">
+            <div className="divide-y divide-slate-100 dark:divide-[#353330]">
               {searchResults.map((player) => {
                 const isFriend = friendUidSet.has(player.uid);
                 const isSent = outgoingUidSet.has(player.uid);
@@ -495,7 +495,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                           type="button"
                           disabled={busyId === player.uid}
                           onClick={() => handleSendRequest(player)}
-                          className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer"
+                          className="px-3.5 py-1.5 rounded-lg btn-chess-primary text-xs font-semibold inline-flex items-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer"
                         >
                           <UserPlus className="w-3.5 h-3.5" />
                           {busyId === player.uid ? 'Sending...' : 'Add Friend'}

@@ -15,7 +15,11 @@ import {
   isUsernameAvailable,
   validateUsernameFormat,
 } from '../lib/firestoreService';
-import { HERO_CHESS_IMAGE, PRESET_AVATARS } from '../types/chess';
+import {
+  BOT_ULTRA_IMAGE,
+  CHESS_ARENA_UI_IMAGE,
+  PRESET_AVATARS,
+} from '../types/chess';
 import { PlayerAvatar } from './PlayerAvatar';
 
 interface AuthScreenProps {
@@ -24,6 +28,7 @@ interface AuthScreenProps {
   onEmailVerifiedRefresh: () => Promise<void>;
   onOnboardingComplete: () => Promise<void>;
   onStartPassAndPlay?: () => void;
+  onStartGuestBot?: () => void;
 }
 
 export const AuthScreen: React.FC<AuthScreenProps> = ({
@@ -32,6 +37,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   onEmailVerifiedRefresh,
   onOnboardingComplete,
   onStartPassAndPlay,
+  onStartGuestBot,
 }) => {
   const [authTab, setAuthTab] = useState<'login' | 'register' | 'reset'>('login');
   const [email, setEmail] = useState('');
@@ -210,44 +216,63 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   };
 
   return (
-    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-12 bg-[#F6F7F9] dark:bg-[#12151A]">
-      {/* Left Hero Showcase */}
-      <div className="relative hidden lg:flex lg:col-span-6 xl:col-span-7 flex-col justify-between p-12 overflow-hidden bg-[#12151A]">
+    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-12 bg-[#EDECE9] dark:bg-[#302E2B]">
+      {/* Left Chess.com-Inspired Hero Showcase */}
+      <div className="relative hidden lg:flex lg:col-span-6 xl:col-span-7 flex-col justify-between p-12 overflow-hidden bg-[#1F1E1B] border-r border-[#3C3A37]">
         <img
-          src={HERO_CHESS_IMAGE}
-          alt="Tournament walnut and maple Staunton chessboard"
-          referrerPolicy="no-referrer"
-          className="absolute inset-0 w-full h-full object-cover opacity-75"
+          src={CHESS_ARENA_UI_IMAGE}
+          alt="Chess Arena Tournament Interface against MiniMax H1 Ultra"
+          className="absolute inset-0 w-full h-full object-cover opacity-35"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0D1014] via-[#0D1014]/55 to-[#0D1014]/40" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#1B1917] via-[#1B1917]/80 to-[#1B1917]/55" />
 
-        <div className="relative z-10 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-emerald-600 flex items-center justify-center text-white shadow-lg">
-            <Crown className="w-5 h-5" />
+        <div className="relative z-10 flex items-center gap-2.5">
+          <div className="w-10 h-10 rounded-lg bg-[#81B64C] shadow-[0_3px_0_#537133] flex items-center justify-center text-white">
+            <Crown className="w-5 h-5 fill-current" />
           </div>
-          <span className="font-display text-xl font-bold tracking-tight text-white">Chess Arena</span>
+          <span className="font-display text-2xl font-extrabold tracking-tight text-white">
+            Chess<span className="text-[#81B64C]">Arena</span>
+          </span>
         </div>
 
-        <div className="relative z-10 max-w-xl">
-          <h1 className="font-display text-4xl xl:text-5xl font-bold tracking-tight text-white leading-[1.12] mb-5">
-            Pure, unhurried online chess built for serious play.
+        <div className="relative z-10 max-w-xl space-y-6">
+          <div className="inline-flex items-center gap-3 p-2.5 pr-4 rounded-xl bg-[#262421]/95 border border-[#3C3A37] shadow-xl">
+            <img
+              src={BOT_ULTRA_IMAGE}
+              alt="MiniMax H1 Ultra"
+              className="w-11 h-11 rounded-lg object-cover ring-2 ring-amber-400"
+            />
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="cc-title-badge cc-title-gm">GM</span>
+                <span className="cc-title-badge cc-title-ultra">ULTRA</span>
+                <span className="font-mono text-xs font-bold text-amber-300">2650 Elo</span>
+              </div>
+              <p className="text-xs font-bold text-white mt-0.5">
+                MiniMax H1 Ultra Engine · Live in Chess Arena
+              </p>
+            </div>
+          </div>
+
+          <h1 className="font-display text-4xl xl:text-5xl font-extrabold tracking-tight text-white leading-[1.12]">
+            Play Chess Online &amp; Challenge MiniMax H1 Ultra.
           </h1>
-          <p className="text-base text-slate-300 leading-relaxed mb-8">
-            Challenge players across devices in real-time untimed matches, sharpen your calculation with tactical
-            puzzles, and climb the global rating leaderboard — with full FIDE rules and server-validated moves.
+          <p className="text-base text-stone-300 leading-relaxed">
+            Experience our tournament-green arena with real-time multiplayer, tactical puzzles, Coach game review,
+            and the 2650-rated MiniMax H1 Ultra AI engine.
           </p>
           <div className="grid grid-cols-3 gap-6 pt-6 border-t border-white/15 text-sm">
             <div>
-              <p className="font-display font-semibold text-white">Untimed Matches</p>
-              <p className="text-slate-400 text-xs mt-1">No clocks or forced forfeits</p>
+              <p className="font-display font-bold text-white">H1 Ultra (2650)</p>
+              <p className="text-stone-400 text-xs mt-1">Depth-9 NMP &amp; PVS AI</p>
             </div>
             <div>
-              <p className="font-display font-semibold text-white">Live Multiplayer</p>
-              <p className="text-slate-400 text-xs mt-1">Instant sync & reconnect</p>
+              <p className="font-display font-bold text-white">Live Multiplayer</p>
+              <p className="text-stone-400 text-xs mt-1">Untimed &amp; Chess960</p>
             </div>
             <div>
-              <p className="font-display font-semibold text-white">Full Chess Rules</p>
-              <p className="text-slate-400 text-xs mt-1">Castling, en passant & PGN</p>
+              <p className="font-display font-bold text-white">Game Review</p>
+              <p className="text-stone-400 text-xs mt-1">Eval Bar &amp; Coach tips</p>
             </div>
           </div>
         </div>
@@ -258,11 +283,11 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
         <div className="w-full max-w-md mx-auto">
           {/* Mobile Brand Header */}
           <div className="flex lg:hidden items-center gap-2.5 mb-8">
-            <div className="w-9 h-9 rounded-lg bg-emerald-600 flex items-center justify-center text-white">
-              <Crown className="w-5 h-5" />
+            <div className="w-9 h-9 rounded-lg bg-[#81B64C] shadow-[0_2px_0_#537133] flex items-center justify-center text-white">
+              <Crown className="w-5 h-5 fill-current" />
             </div>
-            <span className="font-display text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-              Chess Arena
+            <span className="font-display text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+              Chess<span className="text-[#81B64C]">Arena</span>
             </span>
           </div>
 
@@ -274,31 +299,31 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
           )}
 
           {notice && (
-            <div className="mb-5 p-3.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-sm flex items-start gap-2.5">
-              <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
+            <div className="mb-5 p-3.5 rounded-lg bg-[#81B64C]/15 border border-[#81B64C]/40 text-slate-800 dark:text-[#D5E8C0] text-sm flex items-start gap-2.5">
+              <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-[#81B64C]" />
               <span>{notice}</span>
             </div>
           )}
 
           {mode === 'auth' && (
-            <div className="bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl p-6 sm:p-8">
-              <h2 className="font-display text-2xl font-bold text-slate-900 dark:text-white mb-1.5">
+            <div className="bg-white dark:bg-[#262421] border border-[#DFDDD8] dark:border-[#3C3A37] rounded-xl p-6 sm:p-8 shadow-xl">
+              <h2 className="font-display text-2xl font-extrabold text-slate-900 dark:text-white mb-1.5">
                 {authTab === 'login'
                   ? 'Sign in to Chess Arena'
                   : authTab === 'register'
                   ? 'Create your account'
                   : 'Reset your password'}
               </h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+              <p className="text-sm text-stone-500 dark:text-[#9E9C98] mb-6">
                 {authTab === 'login'
-                  ? 'Welcome back. Pick up your matches or challenge a friend.'
+                  ? 'Welcome back. Pick up your matches or challenge MiniMax H1 Ultra.'
                   : authTab === 'register'
                   ? 'Join global players with a unique username and Elo rating.'
                   : 'Enter your account email and we will send a reset link.'}
               </p>
 
               {/* Auth Mode Switcher */}
-              <div className="grid grid-cols-2 gap-1 p-1 rounded-lg bg-slate-100 dark:bg-[#12151A] mb-6">
+              <div className="grid grid-cols-2 gap-1 p-1 rounded-lg bg-stone-100 dark:bg-[#1F1E1B] mb-6">
                 <button
                   type="button"
                   onClick={() => {
@@ -306,13 +331,13 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                     setError(null);
                     setNotice(null);
                   }}
-                  className={`py-2 text-xs font-semibold rounded-md transition-colors cursor-pointer ${
+                  className={`py-2 text-xs font-bold rounded-md transition-colors cursor-pointer ${
                     authTab === 'login'
-                      ? 'bg-white dark:bg-[#222833] text-slate-900 dark:text-white shadow-sm'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                      ? 'bg-white dark:bg-[#312F2C] text-slate-900 dark:text-white shadow-sm'
+                      : 'text-stone-600 dark:text-[#9E9C98] hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
-                  Sign In
+                  Log In
                 </button>
                 <button
                   type="button"
@@ -323,7 +348,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                   }}
                   className={`py-2 text-xs font-semibold rounded-md transition-colors cursor-pointer ${
                     authTab === 'register'
-                      ? 'bg-white dark:bg-[#222833] text-slate-900 dark:text-white shadow-sm'
+                      ? 'bg-white dark:bg-[#312F2C] text-slate-900 dark:text-white shadow-sm'
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                   }`}
                 >
@@ -361,10 +386,10 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
 
               <div className="relative my-6">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-slate-200 dark:border-[#2A313D]" />
+                  <div className="w-full border-t border-slate-200 dark:border-[#3C3A37]" />
                 </div>
                 <div className="relative flex justify-center text-xs">
-                  <span className="px-3 bg-white dark:bg-[#1A1E26] text-slate-400">or use email</span>
+                  <span className="px-3 bg-white dark:bg-[#262421] text-slate-400">or use email</span>
                 </div>
               </div>
 
@@ -381,7 +406,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="player@example.com"
-                      className="w-full pl-9 pr-3.5 py-2.5 rounded-lg bg-slate-50 dark:bg-[#12151A] border border-slate-200 dark:border-[#2A313D] text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
+                      className="w-full pl-9 pr-3.5 py-2.5 rounded-lg bg-slate-50 dark:bg-[#1F1E1B] border border-slate-200 dark:border-[#3C3A37] text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
                     />
                   </div>
                 </div>
@@ -415,7 +440,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="••••••••"
-                        className="w-full pl-9 pr-3.5 py-2.5 rounded-lg bg-slate-50 dark:bg-[#12151A] border border-slate-200 dark:border-[#2A313D] text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
+                        className="w-full pl-9 pr-3.5 py-2.5 rounded-lg bg-slate-50 dark:bg-[#1F1E1B] border border-slate-200 dark:border-[#3C3A37] text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
                       />
                     </div>
                   </div>
@@ -435,7 +460,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         placeholder="••••••••"
-                        className="w-full pl-9 pr-3.5 py-2.5 rounded-lg bg-slate-50 dark:bg-[#12151A] border border-slate-200 dark:border-[#2A313D] text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
+                        className="w-full pl-9 pr-3.5 py-2.5 rounded-lg bg-slate-50 dark:bg-[#1F1E1B] border border-slate-200 dark:border-[#3C3A37] text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
                       />
                     </div>
                   </div>
@@ -444,14 +469,14 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                 <button
                   type="submit"
                   disabled={busy}
-                  className="w-full py-2.5 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-60 cursor-pointer"
+                  className="w-full py-3 px-4 rounded-lg btn-chess-primary text-sm flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {busy
                     ? 'Please wait...'
                     : authTab === 'login'
-                    ? 'Sign In'
+                    ? 'Log In'
                     : authTab === 'register'
-                    ? 'Create Account'
+                    ? 'Sign Up'
                     : 'Send Reset Link'}
                   <ArrowRight className="w-4 h-4" />
                 </button>
@@ -460,33 +485,52 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                   <button
                     type="button"
                     onClick={() => setAuthTab('login')}
-                    className="w-full py-2 text-xs font-medium text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 cursor-pointer"
+                    className="w-full py-2 text-xs font-semibold text-stone-500 hover:text-slate-800 dark:hover:text-white cursor-pointer"
                   >
-                    Back to Sign In
+                    Back to Log In
                   </button>
                 )}
               </form>
 
-              {onStartPassAndPlay && (
-                <div className="mt-6 pt-5 border-t border-slate-200 dark:border-[#2A313D]">
-                  <button
-                    type="button"
-                    onClick={onStartPassAndPlay}
-                    className="w-full py-2.5 px-4 rounded-lg bg-slate-100 dark:bg-[#222833] hover:bg-slate-200 dark:hover:bg-[#2A313D] text-slate-800 dark:text-slate-100 font-semibold text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer"
-                  >
-                    <ArrowLeftRight className="w-4 h-4 text-emerald-500" />
-                    Play 2 Players (Pass &amp; Play)
-                  </button>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 text-center mt-1.5">
-                    Play White &amp; Black on the same device · No account or username needed
+              {(onStartGuestBot || onStartPassAndPlay) && (
+                <div className="mt-6 pt-5 border-t border-[#DFDDD8] dark:border-[#3C3A37] space-y-2.5">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-stone-500 dark:text-[#9E9C98] text-center">
+                    Play Instantly as Guest
                   </p>
+                  {onStartGuestBot && (
+                    <button
+                      type="button"
+                      id="guest-play-h1-ultra"
+                      onClick={onStartGuestBot}
+                      className="w-full py-2.5 px-4 rounded-lg bg-stone-100 dark:bg-[#312F2C] hover:bg-stone-200 dark:hover:bg-[#3C3A37] border border-amber-500/40 text-slate-900 dark:text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2.5 transition-colors cursor-pointer"
+                    >
+                      <img
+                        src={BOT_ULTRA_IMAGE}
+                        alt="MiniMax H1 Ultra"
+                        className="w-5 h-5 rounded object-cover ring-1 ring-amber-400"
+                      />
+                      <span>Play vs MiniMax H1 Ultra</span>
+                      <span className="cc-title-badge cc-title-ultra">2650 GM</span>
+                    </button>
+                  )}
+                  {onStartPassAndPlay && (
+                    <button
+                      type="button"
+                      id="guest-play-pass-and-play"
+                      onClick={onStartPassAndPlay}
+                      className="w-full py-2.5 px-4 rounded-lg btn-chess-secondary text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <ArrowLeftRight className="w-4 h-4 text-[#81B64C]" />
+                      Play 2 Players (Pass &amp; Play)
+                    </button>
+                  )}
                 </div>
               )}
             </div>
           )}
 
           {mode === 'verify_email' && (
-            <div className="bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl p-6 sm:p-8">
+            <div className="bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] rounded-xl p-6 sm:p-8">
               <div className="w-11 h-11 rounded-lg bg-amber-500/15 text-amber-500 flex items-center justify-center mb-4">
                 <Mail className="w-5 h-5" />
               </div>
@@ -504,7 +548,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                   type="button"
                   disabled={busy}
                   onClick={handleCheckVerified}
-                  className="w-full py-2.5 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-60 cursor-pointer"
+                  className="w-full py-2.5 px-4 rounded-lg btn-chess-primary font-semibold text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-60 cursor-pointer"
                 >
                   <RefreshCw className="w-4 h-4" />
                   I’ve Verified — Continue
@@ -513,7 +557,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                   type="button"
                   disabled={busy}
                   onClick={handleResendVerification}
-                  className="w-full py-2.5 px-4 rounded-lg bg-slate-100 dark:bg-[#222833] hover:bg-slate-200 dark:hover:bg-[#2A313D] text-slate-800 dark:text-slate-200 font-medium text-sm transition-colors disabled:opacity-60 cursor-pointer"
+                  className="w-full py-2.5 px-4 rounded-lg bg-slate-100 dark:bg-[#312F2C] hover:bg-slate-200 dark:hover:bg-[#3C3A37] text-slate-800 dark:text-slate-200 font-medium text-sm transition-colors disabled:opacity-60 cursor-pointer"
                 >
                   Resend Verification Email
                 </button>
@@ -530,7 +574,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
           )}
 
           {mode === 'onboarding' && (
-            <div className="bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl p-6 sm:p-8">
+            <div className="bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] rounded-xl p-6 sm:p-8">
               <div className="w-11 h-11 rounded-lg bg-emerald-500/15 text-emerald-500 flex items-center justify-center mb-4">
                 <UserCheck className="w-5 h-5" />
               </div>
@@ -555,7 +599,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                       value={username}
                       onChange={(e) => void handleCheckUsername(e.target.value)}
                       placeholder="grandmaster_alex"
-                      className="w-full pl-8 pr-3.5 py-2.5 rounded-lg bg-slate-50 dark:bg-[#12151A] border border-slate-200 dark:border-[#2A313D] text-sm font-mono text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
+                      className="w-full pl-8 pr-3.5 py-2.5 rounded-lg bg-slate-50 dark:bg-[#1F1E1B] border border-slate-200 dark:border-[#3C3A37] text-sm font-mono text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
                     />
                   </div>
                   {usernameHint && (
@@ -584,7 +628,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
                     placeholder="Alex Carter"
-                    className="w-full px-3.5 py-2.5 rounded-lg bg-slate-50 dark:bg-[#12151A] border border-slate-200 dark:border-[#2A313D] text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
+                    className="w-full px-3.5 py-2.5 rounded-lg bg-slate-50 dark:bg-[#1F1E1B] border border-slate-200 dark:border-[#3C3A37] text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
                   />
                 </div>
 
@@ -629,7 +673,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                 <button
                   type="submit"
                   disabled={busy || usernameStatus === 'taken' || usernameStatus === 'invalid'}
-                  className="w-full py-2.5 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-50 cursor-pointer"
+                  className="w-full py-2.5 px-4 rounded-lg btn-chess-primary font-semibold text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   {busy ? 'Creating profile...' : 'Enter Chess Arena'}
                   <ArrowRight className="w-4 h-4" />

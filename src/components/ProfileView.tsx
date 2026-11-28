@@ -171,15 +171,15 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   if (loadingOther) {
     return (
       <div className="max-w-5xl mx-auto py-12 space-y-4">
-        <div className="h-36 rounded-xl bg-white dark:bg-[#1A1E26] animate-pulse" />
-        <div className="h-48 rounded-xl bg-white dark:bg-[#1A1E26] animate-pulse" />
+        <div className="h-36 rounded-xl bg-white dark:bg-[#262421] animate-pulse" />
+        <div className="h-48 rounded-xl bg-white dark:bg-[#262421] animate-pulse" />
       </div>
     );
   }
 
   if (!profile) {
     return (
-      <div className="max-w-md mx-auto my-12 bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl p-6 text-center">
+      <div className="max-w-md mx-auto my-12 bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] rounded-xl p-6 text-center">
         <p className="text-sm font-semibold text-slate-900 dark:text-white mb-3">Player profile not found.</p>
         <button
           type="button"
@@ -228,7 +228,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       )}
 
       {/* Profile Header Card */}
-      <section className="bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl p-6 sm:p-8">
+      <section className="bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] rounded-xl p-6 sm:p-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
           <div className="flex items-center gap-5">
             <PlayerAvatar
@@ -264,7 +264,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setEditing((v) => !v)}
-                  className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                  className="px-4 py-2 rounded-lg btn-chess-primary text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
                   <Edit3 className="w-3.5 h-3.5" />
                   {editing ? 'Close Editor' : 'Edit Profile'}
@@ -272,7 +272,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 <button
                   type="button"
                   onClick={onOpenSettings}
-                  className="px-4 py-2 rounded-lg bg-slate-100 dark:bg-[#222833] hover:bg-slate-200 dark:hover:bg-[#2A313D] text-slate-700 dark:text-slate-200 text-xs font-semibold transition-colors cursor-pointer"
+                  className="px-4 py-2 rounded-lg bg-slate-100 dark:bg-[#312F2C] hover:bg-slate-200 dark:hover:bg-[#3C3A37] text-slate-700 dark:text-slate-200 text-xs font-semibold transition-colors cursor-pointer"
                 >
                   Preferences
                 </button>
@@ -282,7 +282,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 <button
                   type="button"
                   onClick={() => otherProfile && onChallengePlayer(otherProfile)}
-                  className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                  className="px-4 py-2 rounded-lg btn-chess-primary text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
                   <Swords className="w-3.5 h-3.5" />
                   Challenge to Match
@@ -292,7 +292,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                     type="button"
                     disabled={sendingFriendReq}
                     onClick={handleAddFriend}
-                    className="px-4 py-2 rounded-lg bg-slate-100 dark:bg-[#222833] hover:bg-slate-200 dark:hover:bg-[#2A313D] text-slate-800 dark:text-slate-200 text-xs font-semibold inline-flex items-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer"
+                    className="px-4 py-2 rounded-lg bg-slate-100 dark:bg-[#312F2C] hover:bg-slate-200 dark:hover:bg-[#3C3A37] text-slate-800 dark:text-slate-200 text-xs font-semibold inline-flex items-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer"
                   >
                     <UserPlus className="w-3.5 h-3.5" />
                     {sendingFriendReq ? 'Sending...' : 'Add Friend'}
@@ -307,7 +307,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
         {isOwnProfile && editing && (
           <form
             onSubmit={handleSaveProfile}
-            className="mt-6 pt-6 border-t border-slate-200 dark:border-[#2A313D] grid grid-cols-1 md:grid-cols-2 gap-5"
+            className="mt-6 pt-6 border-t border-slate-200 dark:border-[#3C3A37] grid grid-cols-1 md:grid-cols-2 gap-5"
           >
             <div>
               <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
@@ -319,7 +319,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 maxLength={40}
                 value={editDisplayName}
                 onChange={(e) => setEditDisplayName(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-lg bg-slate-50 dark:bg-[#12151A] border border-slate-200 dark:border-[#2A313D] text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                className="w-full px-3.5 py-2.5 rounded-lg bg-slate-50 dark:bg-[#1F1E1B] border border-slate-200 dark:border-[#3C3A37] text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
               />
             </div>
 
@@ -333,7 +333,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 maxLength={24}
                 value={editUsername}
                 onChange={(e) => void handleUsernameChange(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-lg bg-slate-50 dark:bg-[#12151A] border border-slate-200 dark:border-[#2A313D] font-mono text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                className="w-full px-3.5 py-2.5 rounded-lg bg-slate-50 dark:bg-[#1F1E1B] border border-slate-200 dark:border-[#3C3A37] font-mono text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
               />
               {usernameHint && (
                 <p
@@ -360,7 +360,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 value={editPhotoURL}
                 onChange={(e) => setEditPhotoURL(e.target.value)}
                 placeholder="https://... or select a preset below"
-                className="w-full px-3.5 py-2.5 rounded-lg bg-slate-50 dark:bg-[#12151A] border border-slate-200 dark:border-[#2A313D] text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                className="w-full px-3.5 py-2.5 rounded-lg bg-slate-50 dark:bg-[#1F1E1B] border border-slate-200 dark:border-[#3C3A37] text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
               />
               <div className="flex items-center gap-2.5 flex-wrap">
                 {PRESET_AVATARS.map((url, idx) => (
@@ -389,7 +389,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               <button
                 type="submit"
                 disabled={saving || usernameStatus === 'taken' || usernameStatus === 'invalid'}
-                className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold inline-flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                className="px-5 py-2.5 rounded-lg btn-chess-primary text-xs font-semibold inline-flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
               >
                 <Check className="w-4 h-4" />
                 {saving ? 'Saving...' : 'Save Changes'}
@@ -397,7 +397,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               <button
                 type="button"
                 onClick={() => setEditing(false)}
-                className="px-4 py-2.5 rounded-lg bg-slate-100 dark:bg-[#222833] text-slate-700 dark:text-slate-300 text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer"
+                className="px-4 py-2.5 rounded-lg bg-slate-100 dark:bg-[#312F2C] text-slate-700 dark:text-slate-300 text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer"
               >
                 <X className="w-4 h-4" />
                 Cancel
@@ -419,7 +419,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
         ].map((stat) => (
           <div
             key={stat.label}
-            className="bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl p-4"
+            className="bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] rounded-xl p-4"
           >
             <p className="text-xs text-slate-500 dark:text-slate-400">{stat.label}</p>
             <p className={`font-mono text-2xl font-bold tabular-nums mt-1 ${stat.accent}`}>{stat.value}</p>
@@ -433,7 +433,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
         const achievements = computePlayerAchievements(currentUser, progression, myCompletedMatches);
         const unlockedCount = achievements.filter((a) => a.unlocked).length;
         return (
-          <section className="bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl p-5 space-y-5">
+          <section className="bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] rounded-xl p-5 space-y-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <Award className="w-4 h-4 text-amber-500" />
@@ -465,7 +465,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                   className={`p-3.5 rounded-xl border space-y-1.5 ${
                     ach.unlocked
                       ? 'border-emerald-500/40 bg-emerald-500/8'
-                      : 'border-slate-200 dark:border-[#242A35] bg-slate-50/70 dark:bg-[#14181F] opacity-75'
+                      : 'border-slate-200 dark:border-[#353330] bg-slate-50/70 dark:bg-[#1F1E1B] opacity-75'
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">
@@ -487,7 +487,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       })()}
 
       {/* Recent Match History */}
-      <section className="bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl p-5">
+      <section className="bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] rounded-xl p-5">
         <div className="flex items-center gap-2 mb-4">
           <History className="w-4 h-4 text-slate-400" />
           <h2 className="font-display text-base font-bold text-slate-900 dark:text-white">
@@ -500,7 +500,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
             No completed matches recorded yet.
           </p>
         ) : (
-          <div className="divide-y divide-slate-100 dark:divide-[#242A35]">
+          <div className="divide-y divide-slate-100 dark:divide-[#353330]">
             {matches.slice(0, 10).map((m) => {
               const targetIsWhite = m.whiteId === profile.uid;
               const oppName = targetIsWhite ? m.blackUsername : m.whiteUsername;

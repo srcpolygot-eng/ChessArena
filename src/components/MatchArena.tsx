@@ -12,6 +12,7 @@ import {
   GraduationCap,
   Handshake,
   Lightbulb,
+  MessageSquare,
   RotateCcw,
   Volume2,
   VolumeX,
@@ -33,9 +34,12 @@ import {
   computeBestBotMove,
   evaluatePositionFast,
   formatResultReason,
+  formatSanWithFigurine,
+  getBotMatchCommentary,
   getCapturedPieces,
   validateMoveLocally,
 } from '../lib/chessEngine';
+import { computeBestBotMoveAsync } from '../lib/botWorkerClient';
 import { createChessFromInitialFen } from '../lib/chess960';
 import { askCoachPosition, type CoachPositionReport } from '../lib/coachEngine';
 import { detectOpening } from '../lib/openings';
@@ -48,6 +52,7 @@ import {
   analyzeMatchWithStockfish,
   type AnalysisProgress,
   type GameAnalysisResult,
+  type MoveClassification,
 } from '../lib/stockfishAnalyzer';
 import {
   acceptDraw,
@@ -63,6 +68,7 @@ import { useChessAudio } from '../contexts/ChessAudioContext';
 import {
   DEFAULT_LOCAL_PLAY_PREFERENCES,
   type ChessMatch,
+  type ComputerBot,
   type LocalPlayPreferences,
   type UserPrivateProfile,
   type UserSettings,
@@ -92,6 +98,38 @@ interface OptimisticPreview {
   moveCount: number;
 }
 
+function renderMoveQualityBadge(cls?: MoveClassification) {
+  if (!cls) return null;
+  switch (cls) {
+    case 'best':
+      return (
+        <span className="ml-1 px-1 py-0.2 rounded bg-[#81B64C]/25 text-[#81B64C] text-[9px] font-extrabold">
+          ★
+        </span>
+      );
+    case 'inaccuracy':
+      return (
+        <span className="ml-1 px-1 py-0.2 rounded bg-sky-500/20 text-sky-400 text-[9px] font-extrabold">
+          ?!
+        </span>
+      );
+    case 'mistake':
+      return (
+        <span className="ml-1 px-1 py-0.2 rounded bg-amber-500/20 text-amber-400 text-[9px] font-extrabold">
+          ?
+        </span>
+      );
+    case 'blunder':
+      return (
+        <span className="ml-1 px-1 py-0.2 rounded bg-red-500/25 text-red-400 text-[9px] font-extrabold">
+          ??
+        </span>
+      );
+    default:
+      return null;
+  }
+}
+
 export const MatchArena: React.FC<MatchArenaProps> = ({
   matchId,
   user,
@@ -114,7 +152,8 @@ export const MatchArena: React.FC<MatchArenaProps> = ({
   const [viewingPly, setViewingPly] = useState<number | null>(null);
   const [botThinking, setBotThinking] = useState(false);
   const [nowTick, setNowTick] = useState(Date.now());
-  const [showEvalBar, setShowEvalBar] = useState(false);
+  const [showEvalBar, setShowEvalBar] = useState(true);
+  const [showBotChat, setShowBotChat] = useState(true);
   const [hintSquares, setHintSquares] = useState<{ from: string; to: string } | null>(null);
   const [showEndModal, setShowEndModal] = useState(false);
   const [premove, setPremove] = useState<{ from: string; to: string } | null>(null);
@@ -136,7 +175,7 @@ export const MatchArena: React.FC<MatchArenaProps> = ({
   const moveListRef = useRef<HTMLDivElement | null>(null);
   const analysisAbortRef = useRef<AbortController | null>(null);
 
-  // Real-time Firestore match listener (syncs moves across devices & restores on refresh)
+  // Real-time Firestore match listener
   useEffect(() => {
     setLoading(true);
     setError(null);
@@ -164,7 +203,6 @@ export const MatchArena: React.FC<MatchArenaProps> = ({
         setMatch(data);
         setLoading(false);
 
-        // Reconcile optimistic move once server state catches up
         if (data.moveCount >= optimisticMoveCountRef.current) {
           setOptimistic(null);
         }
@@ -223,7 +261,7 @@ export const MatchArena: React.FC<MatchArenaProps> = ({
     void applyMatchStatsForUser(match, user.uid);
   }, [match, user.uid]);
 
-  // Presence heartbeat inside live match (tracks connection status — NEVER forfeits or times out!)
+  // Presence heartbeat inside live match
   useEffect(() => {
     if (!match || (match.status !== 'active' && match.status !== 'waiting')) return;
     const side = match.whiteId === user.uid ? 'white' : match.blackId === user.uid ? 'black' : null;
@@ -259,14 +297,27 @@ export const MatchArena: React.FC<MatchArenaProps> = ({
     return null;
   }, [match, user.uid]);
 
-  const activeBotName = useMemo(() => {
-    if (!match || match.mode !== 'computer' || !userColor) return 'MiniMax H1 Flash';
+  const activeBot: ComputerBot | null = useMemo(() => {
+    if (!match || match.mode !== 'computer' || !userColor) return null;
     const botId = userColor === 'w' ? match.blackId : match.whiteId;
-    const found = COMPUTER_BOTS.find((b) => b.id === botId);
-    return found?.name || (userColor === 'w' ? match.blackDisplayName : match.whiteDisplayName) || 'MiniMax H1 Flash';
+    return COMPUTER_BOTS.find((b) => b.id === botId) || MINIMAX_H1_FLASH;
   }, [match, userColor]);
 
-  // Computer AI move automation (MiniMax H1 Flash & MiniMax H1 Pro)
+  const activeBotName = activeBot?.name || 'MiniMax H1 Ultra';
+
+  // Build position list for move history inspection & repetition awareness
+  const replayPositions = useMemo(() => {
+    const c = createChessFromInitialFen(match?.initialFen);
+    const positions: { fen: string; from: string; to: string }[] = [{ fen: c.fen(), from: '', to: '' }];
+    for (const san of effectiveMoves) {
+      const m = c.move(san);
+      if (!m) break;
+      positions.push({ fen: c.fen(), from: m.from, to: m.to });
+    }
+    return positions;
+  }, [effectiveMoves, match?.initialFen]);
+
+  // Computer AI move automation (MiniMax H1 Flash, H1 Pro & H1 Ultra via Web Worker)
   useEffect(() => {
     if (!match || match.mode !== 'computer' || match.status !== 'active' || !userColor) return;
     const botColor: Color = userColor === 'w' ? 'b' : 'w';
@@ -276,11 +327,21 @@ export const MatchArena: React.FC<MatchArenaProps> = ({
     const bot = COMPUTER_BOTS.find((b) => b.id === botId) || MINIMAX_H1_FLASH;
 
     let cancelled = false;
+    const workerAbort = new AbortController();
     setBotThinking(true);
-    const delayMs = bot.responseDelayMs ?? 30;
+
+    // Build prior position keys from authoritative match.moves for repetition contempt
+    const historyChess = createChessFromInitialFen(match.initialFen);
+    const priorKeys: string[] = [historyChess.fen()];
+    for (const san of match.moves) {
+      if (!historyChess.move(san)) break;
+      priorKeys.push(historyChess.fen());
+    }
+
+    const delayMs = bot.responseDelayMs ?? 35;
     const timeout = window.setTimeout(async () => {
       try {
-        const best = computeBestBotMove(match.fen, bot);
+        const best = await computeBestBotMoveAsync(match.fen, bot, priorKeys, workerAbort.signal);
         if (best && !cancelled) {
           await submitValidatedMove({
             match,
@@ -303,22 +364,11 @@ export const MatchArena: React.FC<MatchArenaProps> = ({
 
     return () => {
       cancelled = true;
+      workerAbort.abort();
       window.clearTimeout(timeout);
       setBotThinking(false);
     };
   }, [match?.fen, match?.turn, match?.status, match?.moveCount, match?.mode, userColor, user.uid]);
-
-  // Build position list for move history inspection (supports Standard and Chess960)
-  const replayPositions = useMemo(() => {
-    const c = createChessFromInitialFen(match?.initialFen);
-    const positions: { fen: string; from: string; to: string }[] = [{ fen: c.fen(), from: '', to: '' }];
-    for (const san of effectiveMoves) {
-      const m = c.move(san);
-      if (!m) break;
-      positions.push({ fen: c.fen(), from: m.from, to: m.to });
-    }
-    return positions;
-  }, [effectiveMoves, match?.initialFen]);
 
   const displayedPosition = useMemo(() => {
     if (viewingPly !== null && replayPositions[viewingPly]) {
@@ -355,6 +405,23 @@ export const MatchArena: React.FC<MatchArenaProps> = ({
       return false;
     }
   }, [displayedPosition.fen]);
+
+  // Bot live speech bubble line
+  const botSpeechLine = useMemo(() => {
+    if (!activeBot || !match) return null;
+    const isOver = match.status === 'completed';
+    const isDraw = match.result === '1/2-1/2';
+    const botWon = isOver && !isDraw && match.winnerId !== user.uid;
+    return getBotMatchCommentary({
+      bot: activeBot,
+      moveCount: effectiveMoveCount,
+      lastSan: effectiveMoves[effectiveMoves.length - 1] || '',
+      isGameOver: isOver,
+      botWon,
+      isDraw,
+      botThinking,
+    });
+  }, [activeBot, match, effectiveMoveCount, effectiveMoves, user.uid, botThinking]);
 
   // Keyboard shortcuts (←, →, Home, End, F to flip)
   useEffect(() => {
@@ -397,7 +464,6 @@ export const MatchArena: React.FC<MatchArenaProps> = ({
         return;
       }
 
-      // Optimistic local validation & immediate animation + sound for ultra-snappy feel
       const preview = validateMoveLocally({
         fen: match.fen,
         initialFen: match.initialFen,
@@ -443,7 +509,6 @@ export const MatchArena: React.FC<MatchArenaProps> = ({
           promotion,
         });
       } catch (err) {
-        // Revert optimistic move on rejection
         optimisticMoveCountRef.current = match.moveCount;
         setOptimistic(null);
         playSound('illegal');
@@ -455,7 +520,7 @@ export const MatchArena: React.FC<MatchArenaProps> = ({
     [match, userColor, submittingMove, viewingPly, effectiveTurn, playSound, playMoveFromSan, user.uid]
   );
 
-  // Auto-execute queued premove the moment it becomes the player's turn
+  // Auto-execute queued premove when turn arrives
   useEffect(() => {
     if (!premove || !match || !userColor) return;
     if (match.status !== 'active') {
@@ -672,23 +737,23 @@ export const MatchArena: React.FC<MatchArenaProps> = ({
 
   if (loading) {
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3 text-slate-500 dark:text-slate-400">
-        <Loader2 className="w-7 h-7 animate-spin text-emerald-500" />
-        <p className="text-sm font-medium">Loading live chessboard...</p>
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3 text-stone-500 dark:text-[#9E9C98]">
+        <Loader2 className="w-7 h-7 animate-spin text-[#81B64C]" />
+        <p className="text-sm font-semibold">Loading live chessboard...</p>
       </div>
     );
   }
 
   if (!match) {
     return (
-      <div className="max-w-md mx-auto my-12 bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl p-6 text-center">
-        <p className="text-sm font-semibold text-slate-900 dark:text-white mb-2">
+      <div className="max-w-md mx-auto my-12 bg-white dark:bg-[#262421] border border-[#DFDDD8] dark:border-[#3C3A37] rounded-xl p-6 text-center">
+        <p className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
           {error || 'Match could not be loaded.'}
         </p>
         <button
           type="button"
           onClick={onExitMatch}
-          className="px-4 py-2 rounded-lg bg-emerald-600 text-white text-xs font-semibold cursor-pointer"
+          className="px-4 py-2 rounded-lg btn-chess-primary text-xs cursor-pointer"
         >
           Return to Dashboard
         </button>
@@ -698,6 +763,9 @@ export const MatchArena: React.FC<MatchArenaProps> = ({
 
   const baseOrientation: Color = userColor === 'b' ? 'b' : 'w';
   const boardOrientation: Color = flipped ? (baseOrientation === 'w' ? 'b' : 'w') : baseOrientation;
+
+  const getBotMetaForId = (pid: string): ComputerBot | null =>
+    pid.startsWith('computer_') ? COMPUTER_BOTS.find((b) => b.id === pid) || null : null;
 
   const topIsWhite = boardOrientation === 'b';
   const topPlayer = topIsWhite
@@ -712,6 +780,7 @@ export const MatchArena: React.FC<MatchArenaProps> = ({
         advantage: capturedSummary.whiteAdvantage,
         capturedPieceColor: 'b' as Color,
         isTurn: effectiveTurn === 'w' && match.status === 'active',
+        botMeta: getBotMetaForId(match.whiteId),
       }
     : {
         id: match.blackId,
@@ -724,6 +793,7 @@ export const MatchArena: React.FC<MatchArenaProps> = ({
         advantage: capturedSummary.blackAdvantage,
         capturedPieceColor: 'w' as Color,
         isTurn: effectiveTurn === 'b' && match.status === 'active',
+        botMeta: getBotMetaForId(match.blackId),
       };
 
   const bottomPlayer = topIsWhite
@@ -738,6 +808,7 @@ export const MatchArena: React.FC<MatchArenaProps> = ({
         advantage: capturedSummary.blackAdvantage,
         capturedPieceColor: 'w' as Color,
         isTurn: effectiveTurn === 'b' && match.status === 'active',
+        botMeta: getBotMetaForId(match.blackId),
       }
     : {
         id: match.whiteId,
@@ -750,6 +821,7 @@ export const MatchArena: React.FC<MatchArenaProps> = ({
         advantage: capturedSummary.whiteAdvantage,
         capturedPieceColor: 'b' as Color,
         isTurn: effectiveTurn === 'w' && match.status === 'active',
+        botMeta: getBotMetaForId(match.whiteId),
       };
 
   const isPlayerConnected = (playerId: string, lastSeen: ChessMatch['whiteLastSeen']) => {
@@ -786,53 +858,82 @@ export const MatchArena: React.FC<MatchArenaProps> = ({
 
   const userDelta = userColor === 'w' ? match.whiteRatingDelta : userColor === 'b' ? match.blackRatingDelta : 0;
 
+  const renderTitlePills = (botMeta: ComputerBot | null) => {
+    if (!botMeta) return null;
+    const tag = botMeta.titleTag || 'BOT';
+    const cls =
+      tag === 'GM'
+        ? 'cc-title-badge cc-title-gm'
+        : tag === 'IM'
+        ? 'cc-title-badge cc-title-im'
+        : 'cc-title-badge cc-title-fm';
+    return (
+      <>
+        <span className={cls}>{tag}</span>
+        {botMeta.difficulty === 'ultra' && (
+          <span className="cc-title-badge cc-title-ultra">ULTRA</span>
+        )}
+      </>
+    );
+  };
+
   return (
-    <div className="max-w-7xl mx-auto pb-8 space-y-4">
-      {/* Top Match Utility Bar */}
+    <div className="max-w-7xl mx-auto pb-8 space-y-3.5">
+      {/* Top Match Utility Strip */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <button
           type="button"
           onClick={onExitMatch}
-          className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-stone-600 dark:text-[#C3C2C0] hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to Dashboard
+          Exit Match
         </button>
 
-        <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
-          <span className="capitalize font-medium text-slate-700 dark:text-slate-300">
+        <div className="flex flex-wrap items-center gap-2.5 text-xs text-stone-500 dark:text-[#9E9C98]">
+          <span className="capitalize font-bold text-slate-800 dark:text-[#E7E6E4]">
             {match.mode === 'computer' ? `vs ${activeBotName}` : `${match.mode} Match`}
           </span>
           {match.variant === 'chess960' && (
-            <>
-              <span aria-hidden="true">·</span>
-              <span className="font-mono font-semibold text-emerald-600 dark:text-emerald-400">
-                Chess960
-              </span>
-            </>
+            <span className="px-1.5 py-0.5 rounded bg-[#81B64C]/20 font-mono font-bold text-[#81B64C]">
+              Chess960
+            </span>
           )}
           <span aria-hidden="true">·</span>
-          <span>Untimed Classical (No Clock)</span>
+          <span>Untimed</span>
           {match.roomCode && (
             <>
               <span aria-hidden="true">·</span>
-              <span className="font-mono font-semibold text-emerald-600 dark:text-emerald-400">
-                Room {match.roomCode}
-              </span>
+              <span className="font-mono font-bold text-[#81B64C]">Room {match.roomCode}</span>
             </>
+          )}
+          {match.mode === 'computer' && (
+            <button
+              type="button"
+              onClick={() => setShowBotChat((v) => !v)}
+              className={`px-2.5 py-1 rounded-md text-xs font-bold inline-flex items-center gap-1.5 transition-colors cursor-pointer ${
+                showBotChat
+                  ? 'bg-[#81B64C]/20 text-slate-900 dark:text-[#D5E8C0]'
+                  : 'bg-stone-200/80 dark:bg-[#262421] text-stone-600 dark:text-[#9E9C98]'
+              }`}
+              title="Toggle Bot Dialogue Bubble"
+            >
+              <MessageSquare className="w-3.5 h-3.5 text-[#81B64C]" />
+              Bot Chat
+            </button>
           )}
           {canUseEvalBar && (
             <button
               type="button"
               onClick={() => setShowEvalBar((v) => !v)}
-              className={`px-2.5 py-1 rounded-md text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap ${
+              className={`px-2.5 py-1 rounded-md text-xs font-bold inline-flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap ${
                 showEvalBar
-                  ? 'bg-emerald-600/15 text-emerald-700 dark:text-emerald-300'
-                  : 'bg-slate-200/70 dark:bg-[#222833] text-slate-600 dark:text-slate-300'
+                  ? 'bg-[#81B64C]/20 text-slate-900 dark:text-[#D5E8C0]'
+                  : 'bg-stone-200/80 dark:bg-[#262421] text-stone-600 dark:text-[#9E9C98]'
               }`}
             >
-              <BarChart3 className="w-3.5 h-3.5" />
-              Eval Bar
+              <BarChart3 className="w-3.5 h-3.5 text-[#81B64C]" />
+              Eval
             </button>
           )}
         </div>
@@ -840,23 +941,21 @@ export const MatchArena: React.FC<MatchArenaProps> = ({
 
       {/* Private Room Waiting Banner */}
       {match.status === 'waiting' && (
-        <div className="bg-emerald-600/10 border border-emerald-500/30 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="bg-[#81B64C]/12 border border-[#81B64C]/35 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <p className="font-display font-bold text-sm text-slate-900 dark:text-white">
               Waiting for opponent to join room{' '}
-              <span className="font-mono tracking-wider text-emerald-600 dark:text-emerald-400">
-                {match.roomCode}
-              </span>
+              <span className="font-mono tracking-wider text-[#81B64C]">{match.roomCode}</span>
             </p>
-            <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-              Share the room code or invite link — the match starts automatically the moment they join.
+            <p className="text-xs text-stone-600 dark:text-[#9E9C98] mt-0.5">
+              Share the room code or invite link — the match starts automatically when they join.
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
               onClick={handleCopyInviteLink}
-              className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer"
+              className="px-3.5 py-2 rounded-lg btn-chess-primary text-xs inline-flex items-center gap-1.5 cursor-pointer"
             >
               {copiedInvite ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
               {copiedInvite ? 'Link Copied' : 'Copy Invite Link'}
@@ -864,7 +963,7 @@ export const MatchArena: React.FC<MatchArenaProps> = ({
             <button
               type="button"
               onClick={handleCancelWaitingRoom}
-              className="px-3 py-2 rounded-lg bg-slate-200 dark:bg-[#222833] text-slate-700 dark:text-slate-300 text-xs font-medium cursor-pointer"
+              className="px-3 py-2 rounded-lg btn-chess-secondary text-xs cursor-pointer"
             >
               Cancel
             </button>
@@ -879,76 +978,89 @@ export const MatchArena: React.FC<MatchArenaProps> = ({
         </div>
       )}
 
-      {/* Main Chess Workspace: Board Centerpiece (Left/Center) + Match Sidebar (Right) */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-        {/* Left/Center: Player Bars + EvalBar + ChessBoard */}
-        <div className="xl:col-span-8 space-y-3">
-          {/* Top Player Bar */}
-          <div
-            className={`max-w-[680px] mx-auto flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl bg-white dark:bg-[#1A1E26] border transition-colors ${
-              topPlayer.isTurn
-                ? 'border-emerald-500/70'
-                : 'border-slate-200 dark:border-[#2A313D]'
-            }`}
-          >
-            <div className="flex items-center gap-3 min-w-0">
-              <PlayerAvatar src={topPlayer.photoURL} name={topPlayer.displayName} size="sm" />
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="font-display font-bold text-sm text-slate-900 dark:text-white truncate">
-                    {topPlayer.username}
-                  </span>
-                  <span className="font-mono text-xs text-slate-500 dark:text-slate-400 tabular-nums">
-                    ({topPlayer.rating})
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                  {isPlayerConnected(topPlayer.id, topPlayer.lastSeen) ? (
-                    <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-                      <Wifi className="w-3 h-3" />
-                      Connected
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 text-slate-400">
-                      <WifiOff className="w-3 h-3" />
-                      {topPlayer.id ? 'Away' : 'Open Seat'}
-                    </span>
-                  )}
-                  {topPlayer.isTurn && (
-                    <>
-                      <span aria-hidden="true">·</span>
-                      <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-                        {botThinking && topPlayer.id.startsWith('computer_') ? 'Thinking...' : 'To Move'}
-                      </span>
-                    </>
-                  )}
+      {/* Main Chess.com Workspace: Board Centerpiece (Left) + Game Console (Right) */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
+        {/* Left/Center: Top Player Strip + EvalBar & Board + Bottom Player Strip */}
+        <div className="xl:col-span-8 space-y-2">
+          {/* Top Player Strip (Chess.com Compact Player Header + Bot Speech Bubble) */}
+          <div className="max-w-[716px] mx-auto space-y-2">
+            {match.mode === 'computer' && showBotChat && botSpeechLine && topPlayer.botMeta && (
+              <div className="flex items-center gap-3 pl-1">
+                <div className="cc-speech-bubble px-3.5 py-2 text-xs font-medium leading-snug max-w-xl">
+                  {botSpeechLine}
                 </div>
               </div>
-            </div>
+            )}
 
-            {/* Captured Pieces */}
-            <div className="flex items-center gap-1 shrink-0">
-              <div className="flex items-center -space-x-1.5">
-                {topPlayer.captured.slice(0, 12).map((p, i) => (
-                  <ChessPieceSvg
-                    key={`${p}-${i}`}
-                    type={p}
-                    color={topPlayer.capturedPieceColor}
-                    style={settings.pieceStyle}
-                    className="w-4 h-4"
-                  />
-                ))}
+            <div className="flex items-center justify-between gap-3 px-2 py-1.5">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <PlayerAvatar src={topPlayer.photoURL} name={topPlayer.displayName} size="sm" />
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="font-display font-bold text-sm text-slate-900 dark:text-white truncate">
+                      {topPlayer.botMeta ? topPlayer.botMeta.name : topPlayer.username}
+                    </span>
+                    <span className="font-mono text-xs text-stone-500 dark:text-[#9E9C98] tabular-nums">
+                      ({topPlayer.rating})
+                    </span>
+                    {renderTitlePills(topPlayer.botMeta)}
+                    {!topPlayer.botMeta && (
+                      <span className="inline-flex items-center ml-0.5">
+                        {isPlayerConnected(topPlayer.id, topPlayer.lastSeen) ? (
+                          <Wifi className="w-3 h-3 text-[#81B64C]" />
+                        ) : (
+                          <WifiOff className="w-3 h-3 text-stone-400" />
+                        )}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Captured Pieces Row directly under name (Chess.com style) */}
+                  <div className="flex items-center gap-1 min-h-[16px] mt-0.5">
+                    <div className="flex items-center -space-x-1">
+                      {topPlayer.captured.slice(0, 14).map((p, i) => (
+                        <ChessPieceSvg
+                          key={`${p}-${i}`}
+                          type={p}
+                          color={topPlayer.capturedPieceColor}
+                          style={settings.pieceStyle}
+                          className="w-3.5 h-3.5 opacity-90"
+                        />
+                      ))}
+                    </div>
+                    {topPlayer.advantage > 0 && (
+                      <span className="font-mono text-[11px] font-bold text-stone-500 dark:text-[#9E9C98] ml-1 tabular-nums">
+                        +{topPlayer.advantage}
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
-              {topPlayer.advantage > 0 && (
-                <span className="font-mono text-xs font-semibold text-slate-500 dark:text-slate-400 ml-1 tabular-nums">
-                  +{topPlayer.advantage}
-                </span>
-              )}
+
+              {/* Right Turn / Thinking Status Pill (Chess.com Clock Box Spot) */}
+              <div
+                className={`px-3 py-1.5 rounded-[4px] font-mono text-xs font-bold tabular-nums shrink-0 flex items-center gap-1.5 ${
+                  topPlayer.isTurn
+                    ? 'bg-white dark:bg-[#F2F1EE] text-[#262421] shadow-sm'
+                    : 'bg-stone-200/70 dark:bg-[#262421] text-stone-500 dark:text-[#8B8985]'
+                }`}
+              >
+                {botThinking && topPlayer.botMeta ? (
+                  <>
+                    <Loader2 className="w-3 h-3 animate-spin text-[#81B64C]" />
+                    <span>Thinking</span>
+                  </>
+                ) : topPlayer.isTurn ? (
+                  <span>To Move</span>
+                ) : (
+                  <span>Waiting</span>
+                )}
+              </div>
             </div>
           </div>
 
           {/* Eval Bar + Interactive Chessboard Centerpiece */}
-          <div className="max-w-[716px] mx-auto flex items-stretch justify-center gap-2.5">
+          <div className="max-w-[716px] mx-auto flex items-stretch justify-center gap-2">
             {canUseEvalBar && showEvalBar && (
               <EvalBar
                 evalCpWhite={evalScore.cpWhite}
@@ -993,15 +1105,21 @@ export const MatchArena: React.FC<MatchArenaProps> = ({
                 onIllegalAttempt={() => playSound('illegal')}
               />
 
-              {/* End-of-Game Summary Overlay (Chess.com-style) */}
+              {/* End-of-Game Summary Overlay (Chess.com Game Over Modal) */}
               {match.status === 'completed' && showEndModal && (
-                <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/50 backdrop-blur-[2px] p-4 rounded-md">
-                  <div className="w-full max-w-sm bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl shadow-2xl p-6 text-center space-y-4">
-                    <div className="w-12 h-12 rounded-xl bg-amber-500/15 text-amber-500 flex items-center justify-center mx-auto">
-                      <Trophy className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <h3 className="font-display text-xl font-bold text-slate-900 dark:text-white">
+                <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/55 backdrop-blur-[2px] p-4 rounded-[4px]">
+                  <div className="w-full max-w-xs sm:max-w-sm bg-white dark:bg-[#262421] border border-[#DFDDD8] dark:border-[#3C3A37] rounded-xl shadow-2xl overflow-hidden text-center">
+                    <div className="bg-[#81B64C] px-5 py-4 text-white relative">
+                      <button
+                        type="button"
+                        onClick={() => setShowEndModal(false)}
+                        aria-label="Close modal"
+                        className="absolute top-3 right-3 p-1 rounded hover:bg-black/15 text-white/90 cursor-pointer"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                      <Trophy className="w-7 h-7 mx-auto mb-1" />
+                      <h3 className="font-display text-xl font-extrabold">
                         {match.result === '1/2-1/2'
                           ? 'Game Drawn'
                           : match.winnerId === user.uid
@@ -1010,63 +1128,42 @@ export const MatchArena: React.FC<MatchArenaProps> = ({
                           ? `${match.whiteUsername} Won`
                           : `${match.blackUsername} Won`}
                       </h3>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                        {formatResultReason(match.resultReason)} · {match.result}
+                      <p className="text-xs text-white/90 font-medium mt-0.5">
+                        by {formatResultReason(match.resultReason)}
                         {match.mode !== 'computer' && userDelta !== 0 && (
-                          <span
-                            className={`font-mono font-semibold ml-1.5 tabular-nums ${
-                              userDelta > 0 ? 'text-emerald-500' : 'text-red-500'
-                            }`}
-                          >
+                          <span className="font-mono font-bold ml-1.5">
                             ({userDelta > 0 ? `+${userDelta}` : userDelta} Elo)
                           </span>
                         )}
                       </p>
                     </div>
 
-                    <div className="space-y-2 pt-1">
+                    <div className="p-5 space-y-2.5">
                       {match.moves.length > 0 && (
                         <button
                           type="button"
                           onClick={() => void handleRunAnalysis()}
-                          className="w-full py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold inline-flex items-center justify-center gap-1.5 cursor-pointer"
+                          className="w-full py-3 rounded-lg btn-chess-primary text-sm inline-flex items-center justify-center gap-2 cursor-pointer"
                         >
                           <GraduationCap className="w-4 h-4" />
-                          Coach Review
+                          Game Review
                         </button>
                       )}
                       <div className="grid grid-cols-2 gap-2">
                         <button
                           type="button"
-                          onClick={() => void handleCopyPgn()}
-                          className="py-2 rounded-lg bg-slate-100 dark:bg-[#222833] hover:bg-slate-200 dark:hover:bg-[#2A313D] text-slate-700 dark:text-slate-200 text-xs font-semibold inline-flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer"
+                          onClick={onPlayAgain}
+                          className="py-2.5 rounded-lg btn-chess-secondary text-xs cursor-pointer"
                         >
-                          {copiedPgn ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
-                          {copiedPgn ? 'Copied PGN' : 'Copy PGN'}
+                          New Game
                         </button>
                         <button
                           type="button"
                           onClick={handleDownloadPgn}
-                          className="py-2 rounded-lg bg-slate-100 dark:bg-[#222833] hover:bg-slate-200 dark:hover:bg-[#2A313D] text-slate-700 dark:text-slate-200 text-xs font-semibold inline-flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer"
+                          className="py-2.5 rounded-lg btn-chess-secondary text-xs inline-flex items-center justify-center gap-1.5 cursor-pointer"
                         >
                           <Download className="w-3.5 h-3.5" />
-                          Export .pgn
-                        </button>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <button
-                          type="button"
-                          onClick={onPlayAgain}
-                          className="py-2 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-semibold cursor-pointer"
-                        >
-                          New Match
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setShowEndModal(false)}
-                          className="py-2 rounded-lg bg-slate-100 dark:bg-[#222833] hover:bg-slate-200 dark:hover:bg-[#2A313D] text-slate-700 dark:text-slate-200 text-xs font-semibold cursor-pointer"
-                        >
-                          View Board
+                          Download PGN
                         </button>
                       </div>
                     </div>
@@ -1076,199 +1173,130 @@ export const MatchArena: React.FC<MatchArenaProps> = ({
             </div>
           </div>
 
-          {/* Bottom Player Bar */}
-          <div
-            className={`max-w-[680px] mx-auto flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl bg-white dark:bg-[#1A1E26] border transition-colors ${
-              bottomPlayer.isTurn
-                ? 'border-emerald-500/70'
-                : 'border-slate-200 dark:border-[#2A313D]'
-            }`}
-          >
-            <div className="flex items-center gap-3 min-w-0">
+          {/* Bottom Player Strip */}
+          <div className="max-w-[716px] mx-auto flex items-center justify-between gap-3 px-2 py-1.5">
+            <div className="flex items-center gap-2.5 min-w-0">
               <PlayerAvatar src={bottomPlayer.photoURL} name={bottomPlayer.displayName} size="sm" />
               <div className="min-w-0">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="font-display font-bold text-sm text-slate-900 dark:text-white truncate">
-                    {bottomPlayer.username}
+                    {bottomPlayer.botMeta ? bottomPlayer.botMeta.name : bottomPlayer.username}
                   </span>
-                  <span className="font-mono text-xs text-slate-500 dark:text-slate-400 tabular-nums">
+                  <span className="font-mono text-xs text-stone-500 dark:text-[#9E9C98] tabular-nums">
                     ({bottomPlayer.rating})
                   </span>
+                  {renderTitlePills(bottomPlayer.botMeta)}
                 </div>
-                <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                  {isPlayerConnected(bottomPlayer.id, bottomPlayer.lastSeen) ? (
-                    <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-                      <Wifi className="w-3 h-3" />
-                      Connected
+                <div className="flex items-center gap-1 min-h-[16px] mt-0.5">
+                  <div className="flex items-center -space-x-1">
+                    {bottomPlayer.captured.slice(0, 14).map((p, i) => (
+                      <ChessPieceSvg
+                        key={`${p}-${i}`}
+                        type={p}
+                        color={bottomPlayer.capturedPieceColor}
+                        style={settings.pieceStyle}
+                        className="w-3.5 h-3.5 opacity-90"
+                      />
+                    ))}
+                  </div>
+                  {bottomPlayer.advantage > 0 && (
+                    <span className="font-mono text-[11px] font-bold text-stone-500 dark:text-[#9E9C98] ml-1 tabular-nums">
+                      +{bottomPlayer.advantage}
                     </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 text-slate-400">
-                      <WifiOff className="w-3 h-3" />
-                      Away
-                    </span>
-                  )}
-                  {bottomPlayer.isTurn && (
-                    <>
-                      <span aria-hidden="true">·</span>
-                      <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-                        {bottomPlayer.id === user.uid ? 'Your Turn' : 'To Move'}
-                      </span>
-                    </>
                   )}
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-1 shrink-0">
-              <div className="flex items-center -space-x-1.5">
-                {bottomPlayer.captured.slice(0, 12).map((p, i) => (
-                  <ChessPieceSvg
-                    key={`${p}-${i}`}
-                    type={p}
-                    color={bottomPlayer.capturedPieceColor}
-                    style={settings.pieceStyle}
-                    className="w-4 h-4"
-                  />
-                ))}
-              </div>
-              {bottomPlayer.advantage > 0 && (
-                <span className="font-mono text-xs font-semibold text-slate-500 dark:text-slate-400 ml-1 tabular-nums">
-                  +{bottomPlayer.advantage}
-                </span>
-              )}
+            <div
+              className={`px-3 py-1.5 rounded-[4px] font-mono text-xs font-bold tabular-nums shrink-0 ${
+                bottomPlayer.isTurn
+                  ? 'bg-[#81B64C] text-white shadow-sm'
+                  : 'bg-stone-200/70 dark:bg-[#262421] text-stone-500 dark:text-[#8B8985]'
+              }`}
+            >
+              {bottomPlayer.isTurn
+                ? bottomPlayer.id === user.uid
+                  ? 'Your Turn'
+                  : 'To Move'
+                : 'Waiting'}
             </div>
           </div>
-
-          <p className="max-w-[680px] mx-auto text-[11px] text-slate-400 dark:text-slate-500 text-center">
-            Tip: Right-click a square to highlight · Right-click &amp; drag to draw arrows · Use ← → keys to step moves · Press F to flip
-          </p>
         </div>
 
-        {/* Right Sidebar: Status, Opening, Move History, Analysis & Controls */}
+        {/* Right Console: Chess.com Dark Walnut Move Sheet, Opening Bar & Match Controls */}
         <aside className="xl:col-span-4 space-y-4">
-          <div className="bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl flex flex-col overflow-hidden">
-            {/* Status Banner */}
-            <div className="p-4 border-b border-slate-200 dark:border-[#2A313D]">
-              {match.status === 'completed' ? (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
-                    <Trophy className="w-4 h-4" />
-                    <span className="font-display font-bold text-sm">
-                      {match.result === '1/2-1/2'
-                        ? 'Match Drawn (½ – ½)'
-                        : match.winnerId === user.uid
-                        ? 'Victory!'
-                        : match.result === '1-0'
-                        ? `${match.whiteUsername} Wins (1–0)`
-                        : `${match.blackUsername} Wins (0–1)`}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {formatResultReason(match.resultReason)}
-                    {match.mode !== 'computer' && userDelta !== 0 && (
-                      <span
-                        className={`font-mono font-semibold ml-2 tabular-nums ${
-                          userDelta > 0 ? 'text-emerald-500' : 'text-red-500'
-                        }`}
-                      >
-                        {userDelta > 0 ? `+${userDelta}` : userDelta} Elo
-                      </span>
-                    )}
-                  </p>
-                  <div className="pt-2 flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={onPlayAgain}
-                      className="flex-1 py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap"
-                    >
-                      New Match
-                    </button>
-                    {match.moves.length > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => void handleRunAnalysis()}
-                        disabled={analyzing}
-                        className="px-3 py-2 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap disabled:opacity-60"
-                      >
-                        <GraduationCap className="w-3.5 h-3.5" />
-                        {analyzing ? 'Reviewing...' : 'Coach Review'}
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={handleDownloadPgn}
-                      className="px-3 py-2 rounded-lg bg-slate-100 dark:bg-[#222833] hover:bg-slate-200 dark:hover:bg-[#2A313D] text-slate-700 dark:text-slate-200 text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
-                      title="Download PGN file"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      .pgn
-                    </button>
-                  </div>
-                </div>
-              ) : match.status === 'waiting' ? (
-                <div>
-                  <p className="font-display font-bold text-sm text-slate-900 dark:text-white">
-                    Waiting for Opponent
-                  </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Share room code <span className="font-mono font-semibold">{match.roomCode}</span> to begin.
-                  </p>
-                </div>
-              ) : (
-                <div className="flex items-center justify-between gap-2">
-                  <div>
-                    <p className="font-display font-bold text-sm text-slate-900 dark:text-white">
-                      {isInCheckNow ? 'Check! ' : ''}
-                      {effectiveTurn === 'w' ? 'White to Move' : 'Black to Move'}
-                    </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                      {isUserTurn
-                        ? 'Your turn — click or drag a piece to move'
-                        : botThinking
-                        ? `${activeBotName} calculating reply...`
-                        : premove
-                        ? `Premove queued: ${premove.from}→${premove.to} (right-click to cancel)`
-                        : 'Waiting for opponent’s move'}
-                    </p>
-                  </div>
-                  <span className="font-mono text-xs text-slate-500 dark:text-slate-400 tabular-nums shrink-0">
-                    Move {Math.floor(effectiveMoveCount / 2) + 1}
-                  </span>
-                </div>
-              )}
+          <div className="bg-white dark:bg-[#262421] border border-[#DFDDD8] dark:border-[#3C3A37] rounded-xl flex flex-col overflow-hidden shadow-lg">
+            {/* Console Header */}
+            <div className="px-4 py-3 bg-stone-50 dark:bg-[#211F1C] border-b border-[#DFDDD8] dark:border-[#353330] flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="font-display font-extrabold text-sm text-slate-900 dark:text-white truncate">
+                  {match.status === 'completed'
+                    ? match.result === '1/2-1/2'
+                      ? 'Game Drawn (½–½)'
+                      : match.winnerId === user.uid
+                      ? 'Victory!'
+                      : match.result === '1-0'
+                      ? 'White Won (1–0)'
+                      : 'Black Won (0–1)'
+                    : isInCheckNow
+                    ? `Check! · ${effectiveTurn === 'w' ? 'White' : 'Black'} to Move`
+                    : `${effectiveTurn === 'w' ? 'White' : 'Black'} to Move`}
+                </p>
+                <p className="text-[11px] text-stone-500 dark:text-[#9E9C98] truncate">
+                  {match.status === 'completed'
+                    ? formatResultReason(match.resultReason)
+                    : botThinking
+                    ? `${activeBotName} calculating...`
+                    : premove
+                    ? `Premove: ${premove.from}→${premove.to}`
+                    : isUserTurn
+                    ? 'Click or drag a piece to move'
+                    : 'Waiting for opponent'}
+                </p>
+              </div>
+              <span className="px-2 py-0.5 rounded bg-stone-200/80 dark:bg-[#312F2C] font-mono text-[11px] font-bold text-stone-600 dark:text-[#C3C2C0] tabular-nums shrink-0">
+                Move {Math.floor(effectiveMoveCount / 2) + 1}
+              </span>
             </div>
 
             {/* Live ECO Opening Explorer Bar */}
-            {currentOpening && (
-              <div className="px-4 py-2 bg-slate-50 dark:bg-[#14181F] border-b border-slate-200 dark:border-[#2A313D] flex items-center gap-2 text-xs">
-                <BookOpen className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                <span className="font-mono font-semibold text-slate-500 dark:text-slate-400">
-                  {currentOpening.eco}
+            <div className="px-4 py-2 bg-stone-100/70 dark:bg-[#1F1E1B] border-b border-[#DFDDD8] dark:border-[#353330] flex items-center gap-2 text-xs">
+              <BookOpen className="w-3.5 h-3.5 text-[#81B64C] shrink-0" />
+              {currentOpening ? (
+                <>
+                  <span className="font-mono font-bold text-stone-500 dark:text-[#9E9C98]">
+                    {currentOpening.eco}
+                  </span>
+                  <span className="text-slate-800 dark:text-[#E7E6E4] font-semibold truncate">
+                    {currentOpening.name}
+                  </span>
+                </>
+              ) : (
+                <span className="text-stone-500 dark:text-[#9E9C98] font-medium">
+                  {match.variant === 'chess960' ? 'Chess960 Starting Position' : 'Starting Position'}
                 </span>
-                <span className="text-slate-700 dark:text-slate-200 font-medium truncate">
-                  {currentOpening.name}
-                </span>
-              </div>
-            )}
+              )}
+            </div>
 
             {/* Incoming Draw Offer Alert */}
             {incomingDrawOffer && (
-              <div className="p-3.5 bg-amber-500/10 border-b border-amber-500/30 flex items-center justify-between gap-2">
-                <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">
+              <div className="p-3 bg-amber-500/12 border-b border-amber-500/30 flex items-center justify-between gap-2">
+                <span className="text-xs font-bold text-amber-700 dark:text-amber-300">
                   Opponent offered a draw
                 </span>
                 <div className="flex gap-1.5">
                   <button
                     type="button"
                     onClick={() => void handleAcceptDraw()}
-                    className="px-2.5 py-1 rounded bg-emerald-600 text-white text-xs font-semibold cursor-pointer"
+                    className="px-2.5 py-1 rounded bg-[#81B64C] text-white text-xs font-bold cursor-pointer"
                   >
                     Accept
                   </button>
                   <button
                     type="button"
                     onClick={() => void handleDeclineDraw()}
-                    className="px-2.5 py-1 rounded bg-slate-200 dark:bg-[#222833] text-slate-700 dark:text-slate-300 text-xs font-medium cursor-pointer"
+                    className="px-2.5 py-1 rounded bg-stone-200 dark:bg-[#312F2C] text-stone-700 dark:text-[#C3C2C0] text-xs font-semibold cursor-pointer"
                   >
                     Decline
                   </button>
@@ -1278,74 +1306,87 @@ export const MatchArena: React.FC<MatchArenaProps> = ({
 
             {/* Viewing Historical Position Notice */}
             {viewingPly !== null && (
-              <div className="px-4 py-2 bg-sky-500/10 border-b border-sky-500/25 flex items-center justify-between text-xs">
+              <div className="px-4 py-1.5 bg-sky-500/12 border-b border-sky-500/25 flex items-center justify-between text-xs">
                 <span className="text-sky-700 dark:text-sky-300 font-medium">
-                  Inspecting move {viewingPly} of {effectiveMoveCount}
+                  Move {viewingPly} of {effectiveMoveCount}
                 </span>
                 <button
                   type="button"
                   onClick={() => setViewingPly(null)}
-                  className="font-semibold text-sky-600 dark:text-sky-400 hover:underline cursor-pointer"
+                  className="font-bold text-sky-600 dark:text-sky-400 hover:underline cursor-pointer"
                 >
-                  Live Position
+                  Jump to Live
                 </button>
               </div>
             )}
 
-            {/* Move History Table */}
-            <div ref={moveListRef} className="flex-1 min-h-[240px] max-h-[380px] overflow-y-auto p-3">
+            {/* Chess.com Zebra-Striped Figurine Algebraic Notation Move List */}
+            <div ref={moveListRef} className="flex-1 min-h-[260px] max-h-[380px] overflow-y-auto">
               {movePairs.length === 0 ? (
-                <div className="h-full min-h-[200px] flex items-center justify-center text-xs text-slate-400">
-                  Moves will be recorded here in algebraic notation.
+                <div className="h-full min-h-[220px] flex items-center justify-center text-xs text-stone-400 dark:text-[#8B8985] px-4 text-center">
+                  Moves appear here in figurine algebraic notation (♘f3, ♗b5).
                 </div>
               ) : (
-                <div className="space-y-0.5 font-mono text-xs tabular-nums">
-                  {movePairs.map((row) => (
-                    <div
-                      key={row.num}
-                      className="grid grid-cols-12 items-center rounded hover:bg-slate-50 dark:hover:bg-[#202631]"
-                    >
-                      <span className="col-span-2 py-1.5 px-2 text-slate-400">{row.num}.</span>
-                      <button
-                        type="button"
-                        onClick={() => setViewingPly(row.wPly === effectiveMoveCount ? null : row.wPly)}
-                        className={`col-span-5 py-1.5 px-2 text-left rounded cursor-pointer ${
-                          currentPly === row.wPly
-                            ? 'bg-emerald-600/20 text-emerald-700 dark:text-emerald-300 font-semibold'
-                            : 'text-slate-800 dark:text-slate-200'
+                <div className="font-mono text-xs tabular-nums">
+                  {movePairs.map((row, idx) => {
+                    const wAnalyzed = analysisResult?.moves[row.wPly - 1];
+                    const bAnalyzed = row.bPly ? analysisResult?.moves[row.bPly - 1] : undefined;
+
+                    return (
+                      <div
+                        key={row.num}
+                        className={`grid grid-cols-12 items-center px-2 py-1 ${
+                          idx % 2 === 0
+                            ? 'bg-transparent'
+                            : 'bg-stone-50/90 dark:bg-[#2B2926]'
                         }`}
                       >
-                        {row.white}
-                      </button>
-                      {row.black ? (
+                        <span className="col-span-2 px-1.5 text-stone-400 dark:text-[#8B8985] select-none">
+                          {row.num}.
+                        </span>
                         <button
                           type="button"
-                          onClick={() => setViewingPly(row.bPly === effectiveMoveCount ? null : (row.bPly ?? null))}
-                          className={`col-span-5 py-1.5 px-2 text-left rounded cursor-pointer ${
-                            currentPly === row.bPly
-                              ? 'bg-emerald-600/20 text-emerald-700 dark:text-emerald-300 font-semibold'
-                              : 'text-slate-800 dark:text-slate-200'
+                          onClick={() => setViewingPly(row.wPly === effectiveMoveCount ? null : row.wPly)}
+                          className={`col-span-5 py-1 px-2 text-left rounded-[4px] font-semibold cursor-pointer transition-colors ${
+                            currentPly === row.wPly
+                              ? 'bg-[#81B64C]/25 dark:bg-[#48453F] text-slate-900 dark:text-white font-bold'
+                              : 'text-slate-800 dark:text-[#DFDEDB] hover:bg-stone-200/60 dark:hover:bg-[#383531]'
                           }`}
                         >
-                          {row.black}
+                          <span>{formatSanWithFigurine(row.white, 'w')}</span>
+                          {renderMoveQualityBadge(wAnalyzed?.classification)}
                         </button>
-                      ) : (
-                        <span className="col-span-5" />
-                      )}
-                    </div>
-                  ))}
+                        {row.black ? (
+                          <button
+                            type="button"
+                            onClick={() => setViewingPly(row.bPly === effectiveMoveCount ? null : (row.bPly ?? null))}
+                            className={`col-span-5 py-1 px-2 text-left rounded-[4px] font-semibold cursor-pointer transition-colors ${
+                              currentPly === row.bPly
+                                ? 'bg-[#81B64C]/25 dark:bg-[#48453F] text-slate-900 dark:text-white font-bold'
+                                : 'text-slate-800 dark:text-[#DFDEDB] hover:bg-stone-200/60 dark:hover:bg-[#383531]'
+                            }`}
+                          >
+                            <span>{formatSanWithFigurine(row.black, 'b')}</span>
+                            {renderMoveQualityBadge(bAnalyzed?.classification)}
+                          </button>
+                        ) : (
+                          <span className="col-span-5" />
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
 
-            {/* Replay Scrubber & Utility Controls */}
-            <div className="px-3 py-2 border-t border-slate-200 dark:border-[#2A313D] flex items-center justify-between gap-1 bg-slate-50 dark:bg-[#14181F]">
+            {/* Chess.com Replay Scrubber & Utility Bar */}
+            <div className="px-3 py-2 border-t border-[#DFDDD8] dark:border-[#353330] flex items-center justify-between gap-1 bg-stone-50 dark:bg-[#1F1E1B]">
               <div className="flex items-center gap-1">
                 <button
                   type="button"
                   disabled={effectiveMoveCount === 0}
                   onClick={() => setViewingPly(0)}
-                  className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-[#222833] text-slate-600 dark:text-slate-300 disabled:opacity-35 cursor-pointer"
+                  className="p-1.5 rounded hover:bg-stone-200 dark:hover:bg-[#312F2C] text-stone-600 dark:text-[#C3C2C0] disabled:opacity-35 cursor-pointer"
                   title="Start position (Home)"
                 >
                   <SkipBack className="w-4 h-4" />
@@ -1354,7 +1395,7 @@ export const MatchArena: React.FC<MatchArenaProps> = ({
                   type="button"
                   disabled={currentPly <= 0}
                   onClick={() => setViewingPly(Math.max(0, currentPly - 1))}
-                  className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-[#222833] text-slate-600 dark:text-slate-300 disabled:opacity-35 cursor-pointer"
+                  className="p-1.5 rounded hover:bg-stone-200 dark:hover:bg-[#312F2C] text-stone-600 dark:text-[#C3C2C0] disabled:opacity-35 cursor-pointer"
                   title="Previous move (←)"
                 >
                   <ChevronLeft className="w-4 h-4" />
@@ -1366,7 +1407,7 @@ export const MatchArena: React.FC<MatchArenaProps> = ({
                     const next = currentPly + 1;
                     setViewingPly(next >= effectiveMoveCount ? null : next);
                   }}
-                  className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-[#222833] text-slate-600 dark:text-slate-300 disabled:opacity-35 cursor-pointer"
+                  className="p-1.5 rounded hover:bg-stone-200 dark:hover:bg-[#312F2C] text-stone-600 dark:text-[#C3C2C0] disabled:opacity-35 cursor-pointer"
                   title="Next move (→)"
                 >
                   <ChevronRight className="w-4 h-4" />
@@ -1375,7 +1416,7 @@ export const MatchArena: React.FC<MatchArenaProps> = ({
                   type="button"
                   disabled={viewingPly === null}
                   onClick={() => setViewingPly(null)}
-                  className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-[#222833] text-slate-600 dark:text-slate-300 disabled:opacity-35 cursor-pointer"
+                  className="p-1.5 rounded hover:bg-stone-200 dark:hover:bg-[#312F2C] text-stone-600 dark:text-[#C3C2C0] disabled:opacity-35 cursor-pointer"
                   title="Latest move (End)"
                 >
                   <SkipForward className="w-4 h-4" />
@@ -1386,7 +1427,7 @@ export const MatchArena: React.FC<MatchArenaProps> = ({
                 <button
                   type="button"
                   onClick={() => setFlipped((f) => !f)}
-                  className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-[#222833] text-slate-600 dark:text-slate-300 cursor-pointer"
+                  className="p-1.5 rounded hover:bg-stone-200 dark:hover:bg-[#312F2C] text-stone-600 dark:text-[#C3C2C0] cursor-pointer"
                   title="Flip board (F)"
                 >
                   <RotateCcw className="w-4 h-4" />
@@ -1394,7 +1435,7 @@ export const MatchArena: React.FC<MatchArenaProps> = ({
                 <button
                   type="button"
                   onClick={onToggleSound}
-                  className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-[#222833] text-slate-600 dark:text-slate-300 cursor-pointer"
+                  className="p-1.5 rounded hover:bg-stone-200 dark:hover:bg-[#312F2C] text-stone-600 dark:text-[#C3C2C0] cursor-pointer"
                   title={settings.soundEnabled ? 'Mute sounds' : 'Enable sounds'}
                 >
                   {settings.soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
@@ -1402,7 +1443,7 @@ export const MatchArena: React.FC<MatchArenaProps> = ({
                 <button
                   type="button"
                   onClick={handleCopyPgn}
-                  className="px-2 py-1 rounded hover:bg-slate-200 dark:hover:bg-[#222833] text-[11px] font-mono font-semibold text-slate-600 dark:text-slate-300 cursor-pointer"
+                  className="px-2 py-1 rounded hover:bg-stone-200 dark:hover:bg-[#312F2C] text-[11px] font-mono font-bold text-stone-600 dark:text-[#C3C2C0] cursor-pointer"
                   title="Copy full PGN"
                 >
                   {copiedPgn ? '✓ PGN' : 'PGN'}
@@ -1410,7 +1451,7 @@ export const MatchArena: React.FC<MatchArenaProps> = ({
                 <button
                   type="button"
                   onClick={handleDownloadPgn}
-                  className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-[#222833] text-slate-600 dark:text-slate-300 cursor-pointer"
+                  className="p-1.5 rounded hover:bg-stone-200 dark:hover:bg-[#312F2C] text-stone-600 dark:text-[#C3C2C0] cursor-pointer"
                   title="Download .pgn file"
                 >
                   <Download className="w-3.5 h-3.5" />
@@ -1418,7 +1459,7 @@ export const MatchArena: React.FC<MatchArenaProps> = ({
                 <button
                   type="button"
                   onClick={handleCopyFen}
-                  className="px-2 py-1 rounded hover:bg-slate-200 dark:hover:bg-[#222833] text-[11px] font-mono font-semibold text-slate-600 dark:text-slate-300 cursor-pointer"
+                  className="px-2 py-1 rounded hover:bg-stone-200 dark:hover:bg-[#312F2C] text-[11px] font-mono font-bold text-stone-600 dark:text-[#C3C2C0] cursor-pointer"
                   title="Copy current FEN"
                 >
                   {copiedFen ? '✓ FEN' : 'FEN'}
@@ -1426,112 +1467,136 @@ export const MatchArena: React.FC<MatchArenaProps> = ({
               </div>
             </div>
 
-            {/* Live Coach Tip Banner (Computer Matches or Completed Review) */}
+            {/* Live Coach Tip Banner */}
             {coachAdvice && (
-              <div className="px-4 py-3 bg-emerald-600/10 border-t border-emerald-500/25 space-y-1">
+              <div className="px-4 py-3 bg-[#81B64C]/12 border-t border-[#81B64C]/30 space-y-1">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-bold text-emerald-700 dark:text-emerald-300 inline-flex items-center gap-1.5">
+                  <span className="text-xs font-bold text-[#81B64C] inline-flex items-center gap-1.5">
                     <GraduationCap className="w-3.5 h-3.5" />
                     Coach · {coachAdvice.evalLabel}
                   </span>
                   <button
                     type="button"
                     onClick={() => setCoachAdvice(null)}
-                    className="p-0.5 text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"
+                    className="p-0.5 text-stone-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"
                     aria-label="Dismiss coach advice"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
-                <p className="text-xs font-semibold text-slate-800 dark:text-slate-100">
+                <p className="text-xs font-bold text-slate-800 dark:text-white">
                   {coachAdvice.headline}
                 </p>
-                <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                <p className="text-xs text-stone-600 dark:text-[#C3C2C0] leading-relaxed">
                   {coachAdvice.advice}
                 </p>
               </div>
             )}
 
-            {/* Active Match Actions (Hint & Ask Coach in Computer mode, Offer Draw & Resign) */}
-            {match.status === 'active' && userColor && (
-              <div className="p-3.5 border-t border-slate-200 dark:border-[#2A313D] space-y-2">
-                {confirmResign ? (
-                  <div className="flex items-center justify-between gap-2 p-2.5 rounded-lg bg-red-500/10 border border-red-500/30">
-                    <span className="text-xs font-semibold text-red-600 dark:text-red-400">
-                      Confirm resignation?
-                    </span>
-                    <div className="flex gap-1.5">
+            {/* Bottom Console Actions (Active Match OR Completed Match CTAs) */}
+            {match.status === 'completed' ? (
+              <div className="p-3.5 border-t border-[#DFDDD8] dark:border-[#353330] space-y-2">
+                {match.moves.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => void handleRunAnalysis()}
+                    disabled={analyzing}
+                    className="w-full py-2.5 px-4 rounded-lg btn-chess-primary text-xs sm:text-sm inline-flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <GraduationCap className="w-4 h-4" />
+                    {analyzing ? 'Analyzing Match...' : 'Game Review'}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={onPlayAgain}
+                  className="w-full py-2.5 px-4 rounded-lg btn-chess-secondary text-xs sm:text-sm cursor-pointer"
+                >
+                  New Game
+                </button>
+              </div>
+            ) : (
+              match.status === 'active' &&
+              userColor && (
+                <div className="p-3.5 border-t border-[#DFDDD8] dark:border-[#353330] space-y-2">
+                  {confirmResign ? (
+                    <div className="flex items-center justify-between gap-2 p-2.5 rounded-lg bg-red-500/10 border border-red-500/30">
+                      <span className="text-xs font-bold text-red-600 dark:text-red-400">
+                        Resign this game?
+                      </span>
+                      <div className="flex gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => void handleResign()}
+                          className="px-3 py-1 rounded bg-red-600 hover:bg-red-700 text-white text-xs font-bold cursor-pointer"
+                        >
+                          Resign
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmResign(false)}
+                          className="px-2.5 py-1 rounded bg-stone-200 dark:bg-[#312F2C] text-stone-700 dark:text-[#C3C2C0] text-xs font-semibold cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : match.mode === 'computer' ? (
+                    <div className="grid grid-cols-3 gap-2">
                       <button
                         type="button"
-                        onClick={() => void handleResign()}
-                        className="px-3 py-1 rounded bg-red-600 hover:bg-red-700 text-white text-xs font-semibold cursor-pointer"
+                        disabled={!isUserTurn}
+                        onClick={handleRequestHint}
+                        className="py-2 px-2.5 rounded-lg btn-chess-secondary text-xs inline-flex items-center justify-center gap-1.5 disabled:opacity-45 whitespace-nowrap cursor-pointer"
                       >
-                        Yes, Resign
+                        <Lightbulb className="w-3.5 h-3.5 text-amber-400" />
+                        Hint
                       </button>
                       <button
                         type="button"
-                        onClick={() => setConfirmResign(false)}
-                        className="px-2.5 py-1 rounded bg-slate-200 dark:bg-[#222833] text-slate-700 dark:text-slate-300 text-xs font-medium cursor-pointer"
+                        disabled={coachLoading}
+                        onClick={() => void handleAskCoach()}
+                        className="py-2 px-2.5 rounded-lg btn-chess-secondary text-xs inline-flex items-center justify-center gap-1.5 disabled:opacity-45 whitespace-nowrap cursor-pointer"
                       >
-                        Cancel
+                        {coachLoading ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-[#81B64C]" />
+                        ) : (
+                          <GraduationCap className="w-3.5 h-3.5 text-sky-400" />
+                        )}
+                        Coach
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmResign(true)}
+                        className="py-2 px-2.5 rounded-lg btn-chess-secondary text-xs inline-flex items-center justify-center gap-1.5 hover:!text-red-400 whitespace-nowrap cursor-pointer"
+                      >
+                        <Flag className="w-3.5 h-3.5" />
+                        Resign
                       </button>
                     </div>
-                  </div>
-                ) : match.mode === 'computer' ? (
-                  <div className="grid grid-cols-3 gap-2">
-                    <button
-                      type="button"
-                      disabled={!isUserTurn}
-                      onClick={handleRequestHint}
-                      className="py-2 px-2.5 rounded-lg bg-amber-500/12 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 text-xs font-semibold inline-flex items-center justify-center gap-1.5 transition-colors disabled:opacity-45 whitespace-nowrap cursor-pointer"
-                    >
-                      <Lightbulb className="w-3.5 h-3.5" />
-                      Hint
-                    </button>
-                    <button
-                      type="button"
-                      disabled={coachLoading}
-                      onClick={() => void handleAskCoach()}
-                      className="py-2 px-2.5 rounded-lg bg-emerald-600/12 hover:bg-emerald-600/20 text-emerald-700 dark:text-emerald-300 text-xs font-semibold inline-flex items-center justify-center gap-1.5 transition-colors disabled:opacity-45 whitespace-nowrap cursor-pointer"
-                    >
-                      {coachLoading ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        <GraduationCap className="w-3.5 h-3.5" />
-                      )}
-                      Coach
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setConfirmResign(true)}
-                      className="py-2 px-2.5 rounded-lg bg-red-500/10 hover:bg-red-600 text-red-600 dark:text-red-400 hover:text-white text-xs font-semibold inline-flex items-center justify-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer"
-                    >
-                      <Flag className="w-3.5 h-3.5" />
-                      Resign
-                    </button>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      disabled={outgoingDrawOffer}
-                      onClick={() => void handleOfferDraw()}
-                      className="py-2 px-3 rounded-lg bg-slate-100 dark:bg-[#222833] hover:bg-slate-200 dark:hover:bg-[#2A313D] text-slate-700 dark:text-slate-200 text-xs font-semibold inline-flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50 whitespace-nowrap cursor-pointer"
-                    >
-                      <Handshake className="w-3.5 h-3.5" />
-                      {outgoingDrawOffer ? 'Draw Offered' : 'Offer Draw'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setConfirmResign(true)}
-                      className="py-2 px-3 rounded-lg bg-red-500/10 hover:bg-red-600 text-red-600 dark:text-red-400 hover:text-white text-xs font-semibold inline-flex items-center justify-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer"
-                    >
-                      <Flag className="w-3.5 h-3.5" />
-                      Resign
-                    </button>
-                  </div>
-                )}
-              </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        disabled={outgoingDrawOffer}
+                        onClick={() => void handleOfferDraw()}
+                        className="py-2 px-3 rounded-lg btn-chess-secondary text-xs inline-flex items-center justify-center gap-1.5 disabled:opacity-50 whitespace-nowrap cursor-pointer"
+                      >
+                        <Handshake className="w-3.5 h-3.5" />
+                        {outgoingDrawOffer ? 'Draw Sent' : 'Draw'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmResign(true)}
+                        className="py-2 px-3 rounded-lg btn-chess-secondary text-xs inline-flex items-center justify-center gap-1.5 hover:!text-red-400 whitespace-nowrap cursor-pointer"
+                      >
+                        <Flag className="w-3.5 h-3.5" />
+                        Resign
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )
             )}
           </div>
 

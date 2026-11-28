@@ -194,6 +194,10 @@ export interface ComputerBot {
   name: string;
   username: string;
   rating: number;
+  titleTag?: 'GM' | 'IM' | 'FM' | 'BOT';
+  badge?: string;
+  styleLabel?: string;
+  greeting?: string;
   tagline: string;
   avatar: string;
   depth: number;
@@ -222,17 +226,28 @@ export const DEFAULT_USER_SETTINGS: UserSettings = {
   animationsEnabled: true,
 };
 
-export const HERO_CHESS_IMAGE = '/src/assets/images/hero_chess_arena_1795239891813.jpg';
-export const BOT_NOVICE_IMAGE = '/src/assets/images/bot_avatar_novice_1795239891512.jpg';
-export const BOT_TACTICIAN_IMAGE = '/src/assets/images/bot_avatar_tactician_1795239890766.jpg';
-export const BOT_FLASH_IMAGE = '/src/assets/images/bot_avatar_flash_1795243073650.jpg';
-export const BOT_GRANDMASTER_IMAGE = '/src/assets/images/bot_avatar_grandmaster_1795239891115.jpg';
+import heroChessImg from '../assets/images/hero_chess_arena_1795239891813.jpg';
+import chessArenaUiImg from '../assets/images/chess_arena_ui_1795877256820.jpg';
+import botNoviceImg from '../assets/images/bot_avatar_novice_1795239891512.jpg';
+import botTacticianImg from '../assets/images/bot_avatar_tactician_1795239890766.jpg';
+import botFlashImg from '../assets/images/bot_avatar_flash_1795243073650.jpg';
+import botUltraImg from '../assets/images/bot_avatar_ultra_1795877288300.jpg';
+import botGrandmasterImg from '../assets/images/bot_avatar_grandmaster_1795239891115.jpg';
+
+export const HERO_CHESS_IMAGE = heroChessImg;
+export const CHESS_ARENA_UI_IMAGE = chessArenaUiImg;
+export const BOT_NOVICE_IMAGE = botNoviceImg;
+export const BOT_TACTICIAN_IMAGE = botTacticianImg;
+export const BOT_FLASH_IMAGE = botFlashImg;
+export const BOT_ULTRA_IMAGE = botUltraImg;
+export const BOT_GRANDMASTER_IMAGE = botGrandmasterImg;
 
 export const PRESET_AVATARS: string[] = [
-  BOT_NOVICE_IMAGE,
-  BOT_TACTICIAN_IMAGE,
+  BOT_ULTRA_IMAGE,
   BOT_FLASH_IMAGE,
+  BOT_TACTICIAN_IMAGE,
   BOT_GRANDMASTER_IMAGE,
+  BOT_NOVICE_IMAGE,
   HERO_CHESS_IMAGE,
 ];
 

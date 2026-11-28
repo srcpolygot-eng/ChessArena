@@ -109,6 +109,11 @@ export function computePlayerAchievements(
   completedMatches: ChessMatch[]
 ): AchievementItem[] {
   const chess960Games = completedMatches.filter((m) => m.variant === 'chess960').length;
+  const beatUltra = completedMatches.some(
+    (m) =>
+      m.winnerId === user.uid &&
+      (m.whiteId === 'computer_minimax_h1_ultra' || m.blackId === 'computer_minimax_h1_ultra')
+  );
   const beatPro = completedMatches.some(
     (m) =>
       m.winnerId === user.uid &&
@@ -144,7 +149,7 @@ export function computePlayerAchievements(
     {
       id: 'beat_flash',
       title: 'Flash Tamer',
-      description: 'Defeat MiniMax H1 Flash in a full game.',
+      description: 'Defeat MiniMax H1 Flash (2050) in a full game.',
       category: 'Matches',
       unlocked: beatFlash,
       progressLabel: beatFlash ? 'Unlocked' : '0 / 1',
@@ -152,10 +157,18 @@ export function computePlayerAchievements(
     {
       id: 'beat_pro',
       title: 'Pro Challenger',
-      description: 'Defeat MiniMax H1 Pro in a full game.',
+      description: 'Defeat MiniMax H1 Pro (2350) in a full game.',
       category: 'Matches',
       unlocked: beatPro,
       progressLabel: beatPro ? 'Unlocked' : '0 / 1',
+    },
+    {
+      id: 'beat_ultra',
+      title: 'Ultra Conqueror',
+      description: 'Defeat the flagship MiniMax H1 Ultra (2650 GM) engine.',
+      category: 'Matches',
+      unlocked: beatUltra,
+      progressLabel: beatUltra ? 'Unlocked' : '0 / 1',
     },
     {
       id: 'tactician_10',

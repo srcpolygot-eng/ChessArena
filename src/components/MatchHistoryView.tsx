@@ -500,7 +500,7 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
             </button>
 
             {currentOpening && (
-              <div className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] text-xs">
+              <div className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] text-xs">
                 <BookOpen className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                 <span className="font-mono font-semibold text-slate-500 dark:text-slate-400">
                   {currentOpening.eco}
@@ -519,7 +519,7 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
                 showEvalBar
                   ? 'bg-emerald-600/15 text-emerald-700 dark:text-emerald-300'
-                  : 'bg-slate-200/70 dark:bg-[#222833] text-slate-600 dark:text-slate-300'
+                  : 'bg-slate-200/70 dark:bg-[#312F2C] text-slate-600 dark:text-slate-300'
               }`}
               title="Toggle Evaluation Bar"
             >
@@ -533,7 +533,7 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
                 showPgnViewer
                   ? 'bg-emerald-600/15 text-emerald-700 dark:text-emerald-300'
-                  : 'bg-slate-200/70 dark:bg-[#222833] text-slate-600 dark:text-slate-300'
+                  : 'bg-slate-200/70 dark:bg-[#312F2C] text-slate-600 dark:text-slate-300'
               }`}
               title="Inspect full PGN notation"
             >
@@ -544,7 +544,7 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
             <button
               type="button"
               onClick={() => void handleCopyMatchPgn(selectedMatch)}
-              className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-[#222833] hover:bg-slate-200 dark:hover:bg-[#2A313D] text-slate-700 dark:text-slate-200 text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
+              className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-[#312F2C] hover:bg-slate-200 dark:hover:bg-[#3C3A37] text-slate-700 dark:text-slate-200 text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
             >
               {isCopiedThis ? (
                 <Check className="w-3.5 h-3.5 text-emerald-500" />
@@ -557,7 +557,7 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
             <button
               type="button"
               onClick={() => handleDownloadMatchPgn(selectedMatch)}
-              className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-[#222833] hover:bg-slate-200 dark:hover:bg-[#2A313D] text-slate-700 dark:text-slate-200 text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
+              className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-[#312F2C] hover:bg-slate-200 dark:hover:bg-[#3C3A37] text-slate-700 dark:text-slate-200 text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
               Export .pgn
@@ -590,10 +590,10 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
           <div className="xl:col-span-7 space-y-3">
             {/* Top Player Strip */}
             <div
-              className={`max-w-[716px] mx-auto flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl bg-white dark:bg-[#1A1E26] border transition-colors ${
+              className={`max-w-[716px] mx-auto flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl bg-white dark:bg-[#262421] border transition-colors ${
                 topPlayer.isTurn
                   ? 'border-emerald-500/70'
-                  : 'border-slate-200 dark:border-[#2A313D]'
+                  : 'border-slate-200 dark:border-[#3C3A37]'
               }`}
             >
               <div className="flex items-center gap-3 min-w-0">
@@ -674,10 +674,10 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
 
             {/* Bottom Player Strip */}
             <div
-              className={`max-w-[716px] mx-auto flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl bg-white dark:bg-[#1A1E26] border transition-colors ${
+              className={`max-w-[716px] mx-auto flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl bg-white dark:bg-[#262421] border transition-colors ${
                 bottomPlayer.isTurn
                   ? 'border-emerald-500/70'
-                  : 'border-slate-200 dark:border-[#2A313D]'
+                  : 'border-slate-200 dark:border-[#3C3A37]'
               }`}
             >
               <div className="flex items-center gap-3 min-w-0">
@@ -728,7 +728,7 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
 
             {/* Quick Key Moments Jumper when Coach Review is Available */}
             {activeAnalysis && keyMoments.length > 0 && (
-              <div className="max-w-[716px] mx-auto bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-2">
+              <div className="max-w-[716px] mx-auto bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
                   <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                   <span className="font-semibold">Key Moments:</span>
@@ -745,7 +745,7 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
                       setAutoPlaying(false);
                       goToPly(prevMoment.ply);
                     }}
-                    className="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-[#222833] hover:bg-slate-200 dark:hover:bg-[#2A313D] disabled:opacity-40 text-xs font-semibold text-slate-700 dark:text-slate-200 inline-flex items-center gap-1 whitespace-nowrap cursor-pointer"
+                    className="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-[#312F2C] hover:bg-slate-200 dark:hover:bg-[#3C3A37] disabled:opacity-40 text-xs font-semibold text-slate-700 dark:text-slate-200 inline-flex items-center gap-1 whitespace-nowrap cursor-pointer"
                   >
                     <ChevronLeft className="w-3.5 h-3.5" />
                     Prev Moment
@@ -758,7 +758,7 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
                       setAutoPlaying(false);
                       goToPly(nextMoment.ply);
                     }}
-                    className="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-[#222833] hover:bg-slate-200 dark:hover:bg-[#2A313D] disabled:opacity-40 text-xs font-semibold text-slate-700 dark:text-slate-200 inline-flex items-center gap-1 whitespace-nowrap cursor-pointer"
+                    className="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-[#312F2C] hover:bg-slate-200 dark:hover:bg-[#3C3A37] disabled:opacity-40 text-xs font-semibold text-slate-700 dark:text-slate-200 inline-flex items-center gap-1 whitespace-nowrap cursor-pointer"
                   >
                     Next Moment
                     <ChevronRight className="w-3.5 h-3.5" />
@@ -789,8 +789,8 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
 
           {/* Right Sidebar: Match Summary, Move List, Playback Bar & PGN Box */}
           <aside className="xl:col-span-5 space-y-4">
-            <div className="bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl overflow-hidden flex flex-col">
-              <div className="p-4 border-b border-slate-200 dark:border-[#2A313D]">
+            <div className="bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] rounded-xl overflow-hidden flex flex-col">
+              <div className="p-4 border-b border-slate-200 dark:border-[#3C3A37]">
                 <div className="flex items-center justify-between gap-2">
                   <h2 className="font-display text-base font-bold text-slate-900 dark:text-white">
                     Game Review · {selectedMatch.result || '*'}
@@ -816,7 +816,7 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
                 )}
 
                 <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                  <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-[#14181F]">
+                  <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-[#1F1E1B]">
                     <span className="text-slate-400 block">White</span>
                     <span className="font-semibold text-slate-900 dark:text-white truncate block">
                       {selectedMatch.whiteUsername}
@@ -827,7 +827,7 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
                         ` (${selectedMatch.whiteRatingDelta > 0 ? '+' : ''}${selectedMatch.whiteRatingDelta})`}
                     </span>
                   </div>
-                  <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-[#14181F]">
+                  <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-[#1F1E1B]">
                     <span className="text-slate-400 block">Black</span>
                     <span className="font-semibold text-slate-900 dark:text-white truncate block">
                       {selectedMatch.blackUsername}
@@ -865,7 +865,7 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
                           className={`col-span-5 py-1.5 px-2 text-left rounded cursor-pointer flex items-center justify-between gap-1 ${
                             ply === row.wPly
                               ? 'bg-emerald-600/20 text-emerald-700 dark:text-emerald-300 font-semibold'
-                              : 'text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#222833]'
+                              : 'text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#312F2C]'
                           }`}
                         >
                           <span>{row.white}</span>
@@ -882,7 +882,7 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
                             className={`col-span-5 py-1.5 px-2 text-left rounded cursor-pointer flex items-center justify-between gap-1 ${
                               ply === row.bPly
                                 ? 'bg-emerald-600/20 text-emerald-700 dark:text-emerald-300 font-semibold'
-                                : 'text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#222833]'
+                                : 'text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#312F2C]'
                             }`}
                           >
                             <span>{row.black}</span>
@@ -898,7 +898,7 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
               </div>
 
               {/* Playback Bar */}
-              <div className="p-3 border-t border-slate-200 dark:border-[#2A313D] bg-slate-50 dark:bg-[#14181F] flex items-center justify-between gap-2">
+              <div className="p-3 border-t border-slate-200 dark:border-[#3C3A37] bg-slate-50 dark:bg-[#1F1E1B] flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1">
                   <button
                     type="button"
@@ -907,7 +907,7 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
                       setAutoPlaying(false);
                       goToPly(0, false);
                     }}
-                    className="p-2 rounded hover:bg-slate-200 dark:hover:bg-[#222833] disabled:opacity-35 text-slate-600 dark:text-slate-300 cursor-pointer"
+                    className="p-2 rounded hover:bg-slate-200 dark:hover:bg-[#312F2C] disabled:opacity-35 text-slate-600 dark:text-slate-300 cursor-pointer"
                     title="Start (Home)"
                   >
                     <SkipBack className="w-4 h-4" />
@@ -919,7 +919,7 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
                       setAutoPlaying(false);
                       goToPly(ply - 1);
                     }}
-                    className="p-2 rounded hover:bg-slate-200 dark:hover:bg-[#222833] disabled:opacity-35 text-slate-600 dark:text-slate-300 cursor-pointer"
+                    className="p-2 rounded hover:bg-slate-200 dark:hover:bg-[#312F2C] disabled:opacity-35 text-slate-600 dark:text-slate-300 cursor-pointer"
                     title="Previous move (←)"
                   >
                     <ChevronLeft className="w-4 h-4" />
@@ -943,7 +943,7 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
                       setAutoPlaying(false);
                       goToPly(ply + 1);
                     }}
-                    className="p-2 rounded hover:bg-slate-200 dark:hover:bg-[#222833] disabled:opacity-35 text-slate-600 dark:text-slate-300 cursor-pointer"
+                    className="p-2 rounded hover:bg-slate-200 dark:hover:bg-[#312F2C] disabled:opacity-35 text-slate-600 dark:text-slate-300 cursor-pointer"
                     title="Next move (→)"
                   >
                     <ChevronRight className="w-4 h-4" />
@@ -955,7 +955,7 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
                       setAutoPlaying(false);
                       goToPly(maxPly);
                     }}
-                    className="p-2 rounded hover:bg-slate-200 dark:hover:bg-[#222833] disabled:opacity-35 text-slate-600 dark:text-slate-300 cursor-pointer"
+                    className="p-2 rounded hover:bg-slate-200 dark:hover:bg-[#312F2C] disabled:opacity-35 text-slate-600 dark:text-slate-300 cursor-pointer"
                     title="Final position (End)"
                   >
                     <SkipForward className="w-4 h-4" />
@@ -966,7 +966,7 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
                   <button
                     type="button"
                     onClick={() => setFlipped((f) => !f)}
-                    className="p-2 rounded hover:bg-slate-200 dark:hover:bg-[#222833] text-slate-600 dark:text-slate-300 cursor-pointer"
+                    className="p-2 rounded hover:bg-slate-200 dark:hover:bg-[#312F2C] text-slate-600 dark:text-slate-300 cursor-pointer"
                     title="Flip board (F)"
                   >
                     <RotateCcw className="w-4 h-4" />
@@ -974,7 +974,7 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
                   <button
                     type="button"
                     onClick={() => void handleCopyMatchPgn(selectedMatch)}
-                    className="px-2.5 py-1.5 rounded bg-slate-200 dark:bg-[#222833] text-slate-700 dark:text-slate-200 text-xs font-semibold inline-flex items-center gap-1 cursor-pointer"
+                    className="px-2.5 py-1.5 rounded bg-slate-200 dark:bg-[#312F2C] text-slate-700 dark:text-slate-200 text-xs font-semibold inline-flex items-center gap-1 cursor-pointer"
                     title="Copy full PGN"
                   >
                     {isCopiedThis ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
@@ -983,7 +983,7 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
                   <button
                     type="button"
                     onClick={() => handleDownloadMatchPgn(selectedMatch)}
-                    className="p-2 rounded bg-slate-200 dark:bg-[#222833] text-slate-700 dark:text-slate-200 cursor-pointer"
+                    className="p-2 rounded bg-slate-200 dark:bg-[#312F2C] text-slate-700 dark:text-slate-200 cursor-pointer"
                     title="Download .pgn file"
                   >
                     <Download className="w-3.5 h-3.5" />
@@ -994,7 +994,7 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
 
             {/* Expandable PGN Notation Viewer */}
             {showPgnViewer && (
-              <div className="bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl p-4 space-y-3">
+              <div className="bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] rounded-xl p-4 space-y-3">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <FileText className="w-4 h-4 text-emerald-500" />
@@ -1006,7 +1006,7 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
                     <button
                       type="button"
                       onClick={() => void handleCopyMatchPgn(selectedMatch)}
-                      className="px-2.5 py-1 rounded bg-slate-100 dark:bg-[#222833] hover:bg-slate-200 dark:hover:bg-[#2A313D] text-xs font-semibold text-slate-700 dark:text-slate-200 inline-flex items-center gap-1 cursor-pointer"
+                      className="px-2.5 py-1 rounded bg-slate-100 dark:bg-[#312F2C] hover:bg-slate-200 dark:hover:bg-[#3C3A37] text-xs font-semibold text-slate-700 dark:text-slate-200 inline-flex items-center gap-1 cursor-pointer"
                     >
                       {isCopiedThis ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
                       {isCopiedThis ? 'Copied' : 'Copy'}
@@ -1021,7 +1021,7 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
                     </button>
                   </div>
                 </div>
-                <pre className="p-3 rounded-lg bg-slate-50 dark:bg-[#12151A] border border-slate-200 dark:border-[#242A35] font-mono text-[11px] leading-relaxed text-slate-700 dark:text-slate-300 overflow-x-auto max-h-64 whitespace-pre-wrap break-words">
+                <pre className="p-3 rounded-lg bg-slate-50 dark:bg-[#1F1E1B] border border-slate-200 dark:border-[#353330] font-mono text-[11px] leading-relaxed text-slate-700 dark:text-slate-300 overflow-x-auto max-h-64 whitespace-pre-wrap break-words">
                   {selectedMatchPgn}
                 </pre>
               </div>
@@ -1053,11 +1053,11 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search player or opening..."
-              className="pl-8 pr-3 py-1.5 rounded-lg bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-emerald-500 w-48"
+              className="pl-8 pr-3 py-1.5 rounded-lg bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-emerald-500 w-48"
             />
           </div>
 
-          <div className="flex items-center gap-1 p-1 rounded-lg bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D]">
+          <div className="flex items-center gap-1 p-1 rounded-lg bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37]">
             {(['all', 'wins', 'losses', 'draws'] as const).map((f) => (
               <button
                 key={f}
@@ -1076,7 +1076,7 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
         </div>
       </div>
 
-      <section className="bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl overflow-hidden">
+      <section className="bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] rounded-xl overflow-hidden">
         {filteredMatches.length === 0 ? (
           <div className="p-12 text-center">
             <History className="w-8 h-8 text-slate-400 mx-auto mb-3" />
@@ -1092,7 +1092,7 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
               <button
                 type="button"
                 onClick={onStartNewMatch}
-                className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer"
+                className="px-4 py-2 rounded-lg btn-chess-primary text-xs font-semibold cursor-pointer"
               >
                 Play a Match
               </button>
@@ -1102,7 +1102,7 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-slate-200 dark:border-[#2A313D] bg-slate-50 dark:bg-[#14181F] text-xs text-slate-500 dark:text-slate-400">
+                <tr className="border-b border-slate-200 dark:border-[#3C3A37] bg-slate-50 dark:bg-[#1F1E1B] text-xs text-slate-500 dark:text-slate-400">
                   <th className="py-3 pl-5 pr-3 font-semibold">Players & Opening</th>
                   <th className="py-3 px-3 font-semibold">Outcome</th>
                   <th className="py-3 px-3 font-semibold hidden md:table-cell">Mode</th>
@@ -1111,7 +1111,7 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
                   <th className="py-3 pl-3 pr-5 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-[#242A35] text-sm">
+              <tbody className="divide-y divide-slate-100 dark:divide-[#353330] text-sm">
                 {filteredMatches.map((m) => {
                   const userIsWhite = m.whiteId === currentUid;
                   const oppName = userIsWhite ? m.blackUsername : m.whiteUsername;
@@ -1124,7 +1124,7 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
                   const isCopiedRow = copiedId === m.matchId;
 
                   return (
-                    <tr key={m.matchId} className="hover:bg-slate-50 dark:hover:bg-[#1F242E] transition-colors">
+                    <tr key={m.matchId} className="hover:bg-slate-50 dark:hover:bg-[#312F2C] transition-colors">
                       <td className="py-3.5 pl-5 pr-3">
                         <div className="flex items-center gap-3">
                           <PlayerAvatar src={oppAvatar} name={oppName} size="sm" />
@@ -1179,7 +1179,7 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
                           <button
                             type="button"
                             onClick={() => void handleCopyMatchPgn(m)}
-                            className="p-1.5 rounded-md bg-slate-100 dark:bg-[#222833] hover:bg-slate-200 dark:hover:bg-[#2A313D] text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
+                            className="p-1.5 rounded-md bg-slate-100 dark:bg-[#312F2C] hover:bg-slate-200 dark:hover:bg-[#3C3A37] text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
                             title="Copy PGN"
                           >
                             {isCopiedRow ? (
@@ -1191,7 +1191,7 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
                           <button
                             type="button"
                             onClick={() => handleDownloadMatchPgn(m)}
-                            className="p-1.5 rounded-md bg-slate-100 dark:bg-[#222833] hover:bg-slate-200 dark:hover:bg-[#2A313D] text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
+                            className="p-1.5 rounded-md bg-slate-100 dark:bg-[#312F2C] hover:bg-slate-200 dark:hover:bg-[#3C3A37] text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
                             title="Download .pgn file"
                           >
                             <Download className="w-3.5 h-3.5" />
@@ -1200,7 +1200,7 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
                             type="button"
                             disabled={m.moves.length === 0}
                             onClick={() => openReplay(m, true)}
-                            className="px-2.5 py-1.5 rounded-md bg-slate-100 dark:bg-[#222833] hover:bg-emerald-600 text-slate-700 dark:text-slate-200 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 transition-colors cursor-pointer"
+                            className="px-2.5 py-1.5 rounded-md bg-slate-100 dark:bg-[#312F2C] hover:bg-emerald-600 text-slate-700 dark:text-slate-200 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 transition-colors cursor-pointer"
                           >
                             <GraduationCap className="w-3.5 h-3.5" />
                             Coach Review

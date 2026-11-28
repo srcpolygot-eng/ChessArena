@@ -24,6 +24,7 @@ import {
   updateUserSettings,
 } from './lib/firestoreService';
 import { loadLocalPlayPreferences, saveLocalPlayPreferences } from './lib/localPreferences';
+import { MINIMAX_H1_ULTRA } from './lib/chessEngine';
 import {
   DEFAULT_USER_SETTINGS,
   type ChessMatch,
@@ -525,19 +526,19 @@ function ChessArenaApp() {
   // Loading splash while Firebase Auth initializes
   if (!authReady || profileLoading) {
     return (
-      <div className="min-h-screen bg-[#F6F7F9] dark:bg-[#12151A] flex flex-col items-center justify-center gap-3">
-        <div className="w-11 h-11 rounded-xl bg-emerald-600 flex items-center justify-center text-white">
-          <Crown className="w-6 h-6" />
+      <div className="min-h-screen bg-[#EDECE9] dark:bg-[#302E2B] flex flex-col items-center justify-center gap-3">
+        <div className="w-11 h-11 rounded-xl bg-[#81B64C] shadow-[0_3px_0_#537133] flex items-center justify-center text-white">
+          <Crown className="w-6 h-6 fill-current" />
         </div>
-        <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 font-medium">
-          <Loader2 className="w-4 h-4 animate-spin text-emerald-500" />
+        <div className="flex items-center gap-2 text-sm text-stone-600 dark:text-[#C3C2C0] font-semibold">
+          <Loader2 className="w-4 h-4 animate-spin text-[#81B64C]" />
           Loading Chess Arena...
         </div>
       </div>
     );
   }
 
-  // Guest 2 Players (Pass & Play) — playable immediately without signing in or usernames
+  // Guest Instant Play (2 Players OR vs MiniMax H1 Ultra) — playable immediately without signing in
   if (passAndPlayOptions && !userProfile) {
     const guestSettings: UserSettings = {
       ...DEFAULT_USER_SETTINGS,
@@ -545,7 +546,7 @@ function ChessArenaApp() {
     };
     return (
       <ChessAudioProvider enabled={guestSoundEnabled}>
-        <div className="min-h-screen bg-[#F6F7F9] dark:bg-[#12151A] text-slate-900 dark:text-slate-100">
+        <div className="min-h-screen bg-[#EDECE9] dark:bg-[#302E2B] text-slate-900 dark:text-[#EEEDEB]">
           <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <PassAndPlayArena
               settings={guestSettings}
@@ -568,6 +569,14 @@ function ChessArenaApp() {
         firebaseUser={null}
         onEmailVerifiedRefresh={async () => {}}
         onOnboardingComplete={async () => {}}
+        onStartGuestBot={() =>
+          setPassAndPlayOptions({
+            bot: MINIMAX_H1_ULTRA,
+            playerColor: 'w',
+            autoFlip: false,
+            showEvalBar: true,
+          })
+        }
         onStartPassAndPlay={() =>
           setPassAndPlayOptions({
             whiteLabel: 'White',
@@ -615,7 +624,7 @@ function ChessArenaApp() {
 
   return (
     <ChessAudioProvider enabled={effectiveSettings.soundEnabled}>
-      <div className="min-h-screen bg-[#F6F7F9] dark:bg-[#12151A] text-slate-900 dark:text-slate-100">
+      <div className="min-h-screen bg-[#EDECE9] dark:bg-[#302E2B] text-slate-900 dark:text-[#EEEDEB]">
       <Sidebar
         user={userProfile}
         progression={progression}
@@ -629,11 +638,11 @@ function ChessArenaApp() {
       />
 
       {/* Main Content Workspace */}
-      <main className="lg:pl-64 pb-20 lg:pb-0 min-h-screen">
+      <main className="lg:pl-56 pb-20 lg:pb-0 min-h-screen">
         <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
           {/* Global Non-Blocking Toast Notification */}
           {toast && (
-            <div className="fixed top-4 right-4 z-50 max-w-sm bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 py-3 rounded-lg shadow-xl text-xs font-semibold">
+            <div className="fixed top-4 right-4 z-50 max-w-sm bg-[#262421] dark:bg-[#81B64C] text-white px-4 py-3 rounded-lg shadow-xl text-xs font-bold">
               {toast}
             </div>
           )}

@@ -65,7 +65,7 @@ export const PlayerAvatar: React.FC<PlayerAvatarProps> = ({
           alt={name}
           referrerPolicy="no-referrer"
           onError={() => setImgError(true)}
-          className={`${SIZE_CLASSES[size]} rounded-lg object-cover bg-slate-200 dark:bg-[#222833] ring-1 ring-black/10 dark:ring-white/10`}
+          className={`${SIZE_CLASSES[size]} rounded-lg object-cover bg-slate-200 dark:bg-[#312F2C] ring-1 ring-black/10 dark:ring-white/10`}
         />
       ) : (
         <div
@@ -80,7 +80,7 @@ export const PlayerAvatar: React.FC<PlayerAvatarProps> = ({
         <span
           title={statusLabel}
           aria-label={statusLabel}
-          className={`absolute -bottom-0.5 -right-0.5 ${DOT_CLASSES[size]} rounded-full ${statusColor} ring-2 ring-white dark:ring-[#1A1E26]`}
+          className={`absolute -bottom-0.5 -right-0.5 ${DOT_CLASSES[size]} rounded-full ${statusColor} ring-2 ring-white dark:ring-[#262421]`}
         />
       )}
     </div>

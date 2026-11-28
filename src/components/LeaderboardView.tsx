@@ -101,13 +101,13 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({ currentUid, on
                 setPage(1);
               }}
               placeholder="Filter player..."
-              className="pl-9 pr-3 py-2 rounded-lg bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] text-sm text-slate-900 dark:text-white w-52 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+              className="pl-9 pr-3 py-2 rounded-lg bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] text-sm text-slate-900 dark:text-white w-52 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
             />
           </div>
           <button
             type="button"
             onClick={() => void loadPlayers()}
-            className="p-2.5 rounded-lg bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] text-slate-600 dark:text-slate-300 hover:text-emerald-500 transition-colors cursor-pointer"
+            className="p-2.5 rounded-lg bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] text-slate-600 dark:text-slate-300 hover:text-emerald-500 transition-colors cursor-pointer"
             title="Refresh standings"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -115,11 +115,11 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({ currentUid, on
         </div>
       </div>
 
-      <section className="bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl overflow-hidden">
+      <section className="bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] rounded-xl overflow-hidden">
         {loading ? (
           <div className="p-8 space-y-3">
             {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="h-11 rounded-lg bg-slate-100 dark:bg-[#222833] animate-pulse" />
+              <div key={i} className="h-11 rounded-lg bg-slate-100 dark:bg-[#312F2C] animate-pulse" />
             ))}
           </div>
         ) : pageItems.length === 0 ? (
@@ -131,7 +131,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({ currentUid, on
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-200 dark:border-[#2A313D] bg-slate-50 dark:bg-[#14181F] text-xs text-slate-500 dark:text-slate-400">
+                  <tr className="border-b border-slate-200 dark:border-[#3C3A37] bg-slate-50 dark:bg-[#1F1E1B] text-xs text-slate-500 dark:text-slate-400">
                     <th className="py-3 pl-5 pr-3 font-semibold w-16">Rank</th>
                     <th className="py-3 px-3 font-semibold">Player</th>
                     <th className="py-3 px-3 font-semibold text-right">
@@ -176,7 +176,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({ currentUid, on
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-[#242A35] text-sm">
+                <tbody className="divide-y divide-slate-100 dark:divide-[#353330] text-sm">
                   {pageItems.map((player) => {
                     const isMe = player.uid === currentUid;
                     const winRate =
@@ -191,7 +191,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({ currentUid, on
                         className={`cursor-pointer transition-colors ${
                           isMe
                             ? 'bg-emerald-500/8 hover:bg-emerald-500/12'
-                            : 'hover:bg-slate-50 dark:hover:bg-[#1F242E]'
+                            : 'hover:bg-slate-50 dark:hover:bg-[#312F2C]'
                         }`}
                       >
                         <td className="py-3.5 pl-5 pr-3 font-mono font-bold tabular-nums">
@@ -253,7 +253,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({ currentUid, on
             </div>
 
             {/* Pagination Footer */}
-            <div className="px-5 py-3 border-t border-slate-200 dark:border-[#2A313D] flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+            <div className="px-5 py-3 border-t border-slate-200 dark:border-[#3C3A37] flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
               <span className="font-mono tabular-nums">
                 Showing {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, rankedList.length)} of{' '}
                 {rankedList.length} players
@@ -263,7 +263,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({ currentUid, on
                   type="button"
                   disabled={safePage <= 1}
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  className="p-1.5 rounded-md border border-slate-200 dark:border-[#2A313D] disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-[#222833] cursor-pointer"
+                  className="p-1.5 rounded-md border border-slate-200 dark:border-[#3C3A37] disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-[#312F2C] cursor-pointer"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
@@ -274,7 +274,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({ currentUid, on
                   type="button"
                   disabled={safePage >= totalPages}
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  className="p-1.5 rounded-md border border-slate-200 dark:border-[#2A313D] disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-[#222833] cursor-pointer"
+                  className="p-1.5 rounded-md border border-slate-200 dark:border-[#3C3A37] disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-[#312F2C] cursor-pointer"
                 >
                   <ChevronRight className="w-4 h-4" />
                 </button>

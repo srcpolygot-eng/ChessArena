@@ -13,6 +13,7 @@ import {
   Flag,
   GraduationCap,
   Handshake,
+  Lightbulb,
   Loader2,
   RefreshCw,
   RotateCcw,
@@ -22,13 +23,20 @@ import {
   Undo2,
   Volume2,
   VolumeX,
+  X,
 } from 'lucide-react';
 import {
+  COMPUTER_BOTS,
+  MINIMAX_H1_FLASH,
+  computeBestBotMove,
   evaluateGameTermination,
   evaluatePositionFast,
   formatResultReason,
+  formatSanWithFigurine,
+  getBotMatchCommentary,
   getCapturedPieces,
 } from '../lib/chessEngine';
+import { computeBestBotMoveAsync } from '../lib/botWorkerClient';
 import { createChessFromInitialFen } from '../lib/chess960';
 import { detectOpening } from '../lib/openings';
 import { buildPgnFilename, downloadPgnFile, generateMatchPgn } from '../lib/pgn';
@@ -40,6 +48,7 @@ import {
 import { useChessAudio } from '../contexts/ChessAudioContext';
 import {
   DEFAULT_LOCAL_PLAY_PREFERENCES,
+  type ComputerBot,
   type LocalPlayPreferences,
   type MatchResult,
   type MatchVariant,
@@ -50,6 +59,7 @@ import { ChessBoard } from './ChessBoard';
 import { ChessPieceSvg } from './ChessPieces';
 import { EvalBar } from './EvalBar';
 import { GameAnalysisPanel } from './GameAnalysisPanel';
+import { PlayerAvatar } from './PlayerAvatar';
 
 export interface PassAndPlayOptions {
   whiteLabel?: string;
@@ -59,6 +69,8 @@ export interface PassAndPlayOptions {
   variant?: MatchVariant;
   initialFen?: string;
   chess960Id?: number;
+  bot?: ComputerBot;
+  playerColor?: Color;
 }
 
 interface PassAndPlayArenaProps {
@@ -87,10 +99,27 @@ export const PassAndPlayArena: React.FC<PassAndPlayArenaProps> = ({
   const variant: MatchVariant = options?.variant ?? 'standard';
   const initialFen = options?.initialFen;
 
-  const [whiteLabel, setWhiteLabel] = useState(options?.whiteLabel?.trim() || 'White');
-  const [blackLabel, setBlackLabel] = useState(options?.blackLabel?.trim() || 'Black');
-  const [autoFlip, setAutoFlip] = useState(options?.autoFlip ?? true);
-  const [showEvalBar, setShowEvalBar] = useState(options?.showEvalBar ?? false);
+  const [activeBot, setActiveBot] = useState<ComputerBot | null>(options?.bot ?? null);
+  const [humanColor, setHumanColor] = useState<Color>(options?.playerColor ?? 'w');
+  const [botThinking, setBotThinking] = useState(false);
+  const [liveHint, setLiveHint] = useState<{ from: string; to: string } | null>(null);
+
+  const [whiteLabel, setWhiteLabel] = useState(
+    options?.bot
+      ? (options.playerColor ?? 'w') === 'w'
+        ? 'You'
+        : options.bot.name
+      : options?.whiteLabel?.trim() || 'White'
+  );
+  const [blackLabel, setBlackLabel] = useState(
+    options?.bot
+      ? (options.playerColor ?? 'w') === 'w'
+        ? options.bot.name
+        : 'You'
+      : options?.blackLabel?.trim() || 'Black'
+  );
+  const [autoFlip, setAutoFlip] = useState(options?.bot ? false : (options?.autoFlip ?? true));
+  const [showEvalBar, setShowEvalBar] = useState(options?.bot ? true : (options?.showEvalBar ?? false));
   const [manualFlipped, setManualFlipped] = useState(false);
 
   const [history, setHistory] = useState<MoveRecord[]>([]);
@@ -140,7 +169,7 @@ export const PassAndPlayArena: React.FC<PassAndPlayArenaProps> = ({
   const displayedPos = allPositions[activePly] || allPositions[allPositions.length - 1];
 
   const sanMoves = useMemo(() => history.map((h) => h.san), [history]);
-  const opening = useMemo(() => detectOpening(sanMoves), [sanMoves]);
+  const opening = useMemo(() => detectOpening(sanMoves.slice(0, activePly)), [sanMoves, activePly]);
   const capturedSummary = useMemo(() => getCapturedPieces(displayedPos.fen), [displayedPos.fen]);
 
   const fastEval = useMemo(() => {
@@ -163,14 +192,12 @@ export const PassAndPlayArena: React.FC<PassAndPlayArenaProps> = ({
     }
   }, [displayedPos.fen]);
 
-  // Auto-scroll move list when new moves arrive
   useEffect(() => {
     if (moveListRef.current) {
       moveListRef.current.scrollTop = moveListRef.current.scrollHeight;
     }
   }, [history.length]);
 
-  // Keyboard navigation (Chess.com style: Left, Right, Home, End, F to flip)
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
@@ -199,9 +226,8 @@ export const PassAndPlayArena: React.FC<PassAndPlayArenaProps> = ({
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [history.length]);
 
-  const handleMove = useCallback(
+  const applyExecutedMove = useCallback(
     (from: string, to: string, promotion?: PieceSymbol) => {
-      if (isGameOver || viewingPly !== null) return;
       const nextChess = createChessFromInitialFen(initialFen);
       for (const m of history) {
         nextChess.move(m.san);
@@ -210,7 +236,7 @@ export const PassAndPlayArena: React.FC<PassAndPlayArenaProps> = ({
       const moved = nextChess.move({ from, to, promotion });
       if (!moved) {
         playSound('illegal');
-        return;
+        return false;
       }
 
       const nextHistory: MoveRecord[] = [
@@ -218,6 +244,7 @@ export const PassAndPlayArena: React.FC<PassAndPlayArenaProps> = ({
         { san: moved.san, from: moved.from, to: moved.to, fen: nextChess.fen() },
       ];
       setHistory(nextHistory);
+      setLiveHint(null);
       setDrawOfferedBy(null);
       setConfirmResign(false);
       setAnalysis(null);
@@ -238,24 +265,92 @@ export const PassAndPlayArena: React.FC<PassAndPlayArenaProps> = ({
       } else {
         playMoveFromSan(moved.san);
       }
+      return true;
     },
-    [history, initialFen, isGameOver, viewingPly, playMoveFromSan, playSound]
+    [history, initialFen, playMoveFromSan, playSound]
   );
 
+  const handleMove = useCallback(
+    (from: string, to: string, promotion?: PieceSymbol) => {
+      if (isGameOver || viewingPly !== null || botThinking) return;
+      if (activeBot && liveTurn !== humanColor) {
+        playSound('illegal');
+        return;
+      }
+      applyExecutedMove(from, to, promotion);
+    },
+    [isGameOver, viewingPly, botThinking, activeBot, liveTurn, humanColor, applyExecutedMove, playSound]
+  );
+
+  // Local AI Bot automation (MiniMax H1 Flash / Pro / Ultra in Web Worker)
+  useEffect(() => {
+    if (!activeBot || isGameOver) return;
+    const botSide: Color = humanColor === 'w' ? 'b' : 'w';
+    if (liveTurn !== botSide) return;
+
+    let cancelled = false;
+    const workerAbort = new AbortController();
+    setBotThinking(true);
+
+    const priorKeys = allPositions.map((p) => p.fen);
+    const delayMs = activeBot.responseDelayMs ?? 40;
+
+    const timer = window.setTimeout(async () => {
+      try {
+        const best = await computeBestBotMoveAsync(liveFen, activeBot, priorKeys, workerAbort.signal);
+        if (best && !cancelled) {
+          applyExecutedMove(best.from, best.to, best.promotion as PieceSymbol | undefined);
+        }
+      } finally {
+        if (!cancelled) setBotThinking(false);
+      }
+    }, delayMs);
+
+    return () => {
+      cancelled = true;
+      workerAbort.abort();
+      window.clearTimeout(timer);
+      setBotThinking(false);
+    };
+  }, [activeBot, isGameOver, humanColor, liveTurn, liveFen, allPositions, applyExecutedMove]);
+
   const handleTakeback = () => {
-    if (history.length === 0) return;
+    if (history.length === 0 || botThinking) return;
     abortRef.current?.abort();
     setAnalyzing(false);
     setAnalysis(null);
     setAnalysisError(null);
-    setHistory((prev) => prev.slice(0, -1));
+    // In bot mode, undo full pair (player + bot reply) if it's currently player's turn
+    const stepsBack = activeBot && liveTurn === humanColor && history.length >= 2 ? 2 : 1;
+    setHistory((prev) => prev.slice(0, Math.max(0, prev.length - stepsBack)));
     setViewingPly(null);
+    setLiveHint(null);
     setResult('');
     setResultReason('');
     setDrawOfferedBy(null);
     setConfirmResign(false);
     setShowEndModal(false);
     playSound('undo');
+  };
+
+  const handleRequestHint = () => {
+    if (isGameOver || viewingPly !== null || botThinking) return;
+    const best = computeBestBotMove(displayedPos.fen, MINIMAX_H1_FLASH);
+    if (best) {
+      setLiveHint({ from: best.from, to: best.to });
+      playSound('notify');
+    }
+  };
+
+  const handleSwitchBot = (nextBot: ComputerBot) => {
+    setActiveBot(nextBot);
+    if (humanColor === 'w') {
+      setWhiteLabel('You');
+      setBlackLabel(nextBot.name);
+    } else {
+      setWhiteLabel(nextBot.name);
+      setBlackLabel('You');
+    }
   };
 
   const handleOfferOrAcceptDraw = () => {
@@ -284,7 +379,8 @@ export const PassAndPlayArena: React.FC<PassAndPlayArenaProps> = ({
 
   const handleResignCurrentSide = () => {
     if (isGameOver) return;
-    const winnerResult: MatchResult = liveTurn === 'w' ? '0-1' : '1-0';
+    const resigningSide = activeBot ? humanColor : liveTurn;
+    const winnerResult: MatchResult = resigningSide === 'w' ? '0-1' : '1-0';
     setResult(winnerResult);
     setResultReason('resignation');
     setConfirmResign(false);
@@ -301,14 +397,22 @@ export const PassAndPlayArena: React.FC<PassAndPlayArenaProps> = ({
     setAnalysisProgress(null);
     setHistory([]);
     setViewingPly(null);
+    setLiveHint(null);
     setResult('');
     setResultReason('');
     setDrawOfferedBy(null);
     setConfirmResign(false);
     setShowEndModal(false);
     if (swapSides) {
-      setWhiteLabel(blackLabel);
-      setBlackLabel(whiteLabel);
+      if (activeBot) {
+        const nextHuman: Color = humanColor === 'w' ? 'b' : 'w';
+        setHumanColor(nextHuman);
+        setWhiteLabel(nextHuman === 'w' ? 'You' : activeBot.name);
+        setBlackLabel(nextHuman === 'w' ? activeBot.name : 'You');
+      } else {
+        setWhiteLabel(blackLabel);
+        setBlackLabel(whiteLabel);
+      }
     }
     playSound('gameStart');
   };
@@ -357,11 +461,11 @@ export const PassAndPlayArena: React.FC<PassAndPlayArenaProps> = ({
         blackName: blackLabel,
         result,
         resultReason,
-        mode: 'pass_and_play',
+        mode: activeBot ? 'computer' : 'pass_and_play',
         variant,
         initialFen,
       }),
-    [sanMoves, whiteLabel, blackLabel, result, resultReason, variant, initialFen]
+    [sanMoves, whiteLabel, blackLabel, result, resultReason, activeBot, variant, initialFen]
   );
 
   const handleCopy = async (type: 'pgn' | 'fen') => {
@@ -380,7 +484,14 @@ export const PassAndPlayArena: React.FC<PassAndPlayArenaProps> = ({
     downloadPgnFile(fullPgn, filename);
   };
 
-  const boardOrientation: Color = autoFlip
+  const baseOrient: Color = activeBot ? humanColor : 'w';
+  const boardOrientation: Color = activeBot
+    ? manualFlipped
+      ? baseOrient === 'w'
+        ? 'b'
+        : 'w'
+      : baseOrient
+    : autoFlip
     ? isGameOver
       ? manualFlipped
         ? 'b'
@@ -391,44 +502,51 @@ export const PassAndPlayArena: React.FC<PassAndPlayArenaProps> = ({
     : 'w';
 
   const topIsWhite = boardOrientation === 'b';
+  const whiteIsBot = Boolean(activeBot && humanColor === 'b');
+  const blackIsBot = Boolean(activeBot && humanColor === 'w');
+
   const topPlayer = topIsWhite
     ? {
         name: whiteLabel,
         side: 'White',
+        bot: whiteIsBot ? activeBot : null,
         captured: capturedSummary.capturedByWhite,
         advantage: capturedSummary.whiteAdvantage,
         capturedColor: 'b' as Color,
         isTurn: !isGameOver && liveTurn === 'w',
-        swatch: 'bg-white border-slate-300',
+        swatch: 'bg-white border-stone-300',
       }
     : {
         name: blackLabel,
         side: 'Black',
+        bot: blackIsBot ? activeBot : null,
         captured: capturedSummary.capturedByBlack,
         advantage: capturedSummary.blackAdvantage,
         capturedColor: 'w' as Color,
         isTurn: !isGameOver && liveTurn === 'b',
-        swatch: 'bg-slate-800 border-slate-600',
+        swatch: 'bg-[#262421] border-stone-600',
       };
 
   const bottomPlayer = topIsWhite
     ? {
         name: blackLabel,
         side: 'Black',
+        bot: blackIsBot ? activeBot : null,
         captured: capturedSummary.capturedByBlack,
         advantage: capturedSummary.blackAdvantage,
         capturedColor: 'w' as Color,
         isTurn: !isGameOver && liveTurn === 'b',
-        swatch: 'bg-slate-800 border-slate-600',
+        swatch: 'bg-[#262421] border-stone-600',
       }
     : {
         name: whiteLabel,
         side: 'White',
+        bot: whiteIsBot ? activeBot : null,
         captured: capturedSummary.capturedByWhite,
         advantage: capturedSummary.whiteAdvantage,
         capturedColor: 'b' as Color,
         isTurn: !isGameOver && liveTurn === 'w',
-        swatch: 'bg-white border-slate-300',
+        swatch: 'bg-white border-stone-300',
       };
 
   const movePairs: { num: number; white: string; black?: string; wPly: number; bPly?: number }[] = [];
@@ -444,7 +562,8 @@ export const PassAndPlayArena: React.FC<PassAndPlayArenaProps> = ({
 
   const activeAnalyzedMove = analysis && activePly > 0 ? analysis.moves[activePly - 1] || null : null;
   const hintSquares =
-    activeAnalyzedMove &&
+    liveHint ||
+    (activeAnalyzedMove &&
     activeAnalyzedMove.classification !== 'best' &&
     activeAnalyzedMove.bestMoveUci.length >= 4 &&
     activeAnalyzedMove.bestMoveUci !== activeAnalyzedMove.uci
@@ -452,140 +571,214 @@ export const PassAndPlayArena: React.FC<PassAndPlayArenaProps> = ({
           from: activeAnalyzedMove.bestMoveUci.slice(0, 2),
           to: activeAnalyzedMove.bestMoveUci.slice(2, 4),
         }
-      : null;
+      : null);
+
+  const botSpeech = useMemo(() => {
+    if (!activeBot) return null;
+    const botSide: Color = humanColor === 'w' ? 'b' : 'w';
+    const isDraw = result === '1/2-1/2';
+    const botWon = isGameOver && !isDraw && ((result === '1-0' && botSide === 'w') || (result === '0-1' && botSide === 'b'));
+    return getBotMatchCommentary({
+      bot: activeBot,
+      moveCount: history.length,
+      lastSan: sanMoves[sanMoves.length - 1] || '',
+      isGameOver,
+      botWon,
+      isDraw,
+      botThinking,
+    });
+  }, [activeBot, humanColor, result, isGameOver, history.length, sanMoves, botThinking]);
 
   const outcomeTitle =
     result === '1/2-1/2'
       ? resultReason === 'stalemate'
-        ? 'Stalemate — Draw (½ – ½)'
-        : 'Match Drawn (½ – ½)'
+        ? 'Stalemate — Draw (½–½)'
+        : 'Game Drawn (½–½)'
       : result === '1-0'
-      ? `${whiteLabel} Wins (1 – 0)`
-      : `${blackLabel} Wins (0 – 1)`;
+      ? `${whiteLabel} Won (1–0)`
+      : `${blackLabel} Won (0–1)`;
 
   return (
-    <div className="max-w-7xl mx-auto pb-8 space-y-4">
+    <div className="max-w-7xl mx-auto pb-8 space-y-3.5">
       {/* Top Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <button
           type="button"
           onClick={onExit}
-          className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-stone-600 dark:text-[#C3C2C0] hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
-          Exit 2 Players
+          Back
         </button>
 
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-slate-500 dark:text-slate-400">
-          <span className="font-semibold text-slate-800 dark:text-slate-200">
-            2 Players · Pass & Play
-          </span>
-          {variant === 'chess960' && (
+        <div className="flex flex-wrap items-center gap-2 text-xs text-stone-500 dark:text-[#9E9C98]">
+          {activeBot ? (
+            <div className="flex items-center gap-1.5">
+              <span className="font-bold text-slate-800 dark:text-white mr-1">Engine:</span>
+              {COMPUTER_BOTS.map((b) => (
+                <button
+                  key={b.id}
+                  type="button"
+                  disabled={botThinking}
+                  onClick={() => handleSwitchBot(b)}
+                  className={`px-2.5 py-1 rounded-md text-xs font-bold transition-colors cursor-pointer ${
+                    activeBot.id === b.id
+                      ? 'bg-[#81B64C] text-white'
+                      : 'bg-stone-200/80 dark:bg-[#262421] text-stone-600 dark:text-[#C3C2C0]'
+                  }`}
+                >
+                  {b.difficulty === 'ultra' ? 'H1 Ultra (2650)' : b.difficulty === 'pro' ? 'H1 Pro (2350)' : 'H1 Flash (2050)'}
+                </button>
+              ))}
+            </div>
+          ) : (
             <>
-              <span aria-hidden="true">·</span>
-              <span className="font-mono font-semibold text-emerald-600 dark:text-emerald-400">
-                Chess960{options?.chess960Id !== undefined ? ` #${options.chess960Id}` : ''}
-              </span>
+              <span className="font-bold text-slate-800 dark:text-white">2 Players · Pass &amp; Play</span>
+              <button
+                type="button"
+                onClick={() => setAutoFlip((v) => !v)}
+                className={`px-2.5 py-1 rounded-md text-xs font-bold inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-colors ${
+                  autoFlip
+                    ? 'bg-[#81B64C]/20 text-slate-900 dark:text-[#D5E8C0]'
+                    : 'bg-stone-200/80 dark:bg-[#262421] text-stone-600 dark:text-[#9E9C98]'
+                }`}
+              >
+                <RefreshCw className="w-3.5 h-3.5 text-[#81B64C]" />
+                Auto-Flip: {autoFlip ? 'On' : 'Off'}
+              </button>
             </>
           )}
-          <span aria-hidden="true">·</span>
-          <span>Same Device · Untimed</span>
-
-          <button
-            type="button"
-            onClick={() => setAutoFlip((v) => !v)}
-            className={`px-2.5 py-1 rounded-md text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-colors ${
-              autoFlip
-                ? 'bg-emerald-600/15 text-emerald-700 dark:text-emerald-300'
-                : 'bg-slate-200 dark:bg-[#222833] text-slate-600 dark:text-slate-300'
-            }`}
-            title="Automatically rotate board after each move"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            Auto-Flip: {autoFlip ? 'On' : 'Off'}
-          </button>
 
           <button
             type="button"
             onClick={() => setShowEvalBar((v) => !v)}
-            className={`px-2.5 py-1 rounded-md text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-colors ${
+            className={`px-2.5 py-1 rounded-md text-xs font-bold inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-colors ${
               showEvalBar
-                ? 'bg-emerald-600/15 text-emerald-700 dark:text-emerald-300'
-                : 'bg-slate-200 dark:bg-[#222833] text-slate-600 dark:text-slate-300'
+                ? 'bg-[#81B64C]/20 text-slate-900 dark:text-[#D5E8C0]'
+                : 'bg-stone-200/80 dark:bg-[#262421] text-stone-600 dark:text-[#9E9C98]'
             }`}
-            title="Toggle live evaluation bar"
           >
-            <BarChart3 className="w-3.5 h-3.5" />
-            Eval Bar
+            <BarChart3 className="w-3.5 h-3.5 text-[#81B64C]" />
+            Eval
           </button>
         </div>
       </div>
 
-      {/* Main Split Workspace */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-        {/* Left/Center: Player Bars + EvalBar + Board */}
-        <div className="xl:col-span-8 space-y-3">
-          {/* Top Player Strip */}
-          <div
-            className={`max-w-[716px] mx-auto flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl bg-white dark:bg-[#1A1E26] border transition-colors ${
-              topPlayer.isTurn ? 'border-emerald-500/70' : 'border-slate-200 dark:border-[#2A313D]'
-            }`}
-          >
-            <div className="flex items-center gap-3 min-w-0">
-              <span className={`w-7 h-7 rounded-lg border-2 shrink-0 ${topPlayer.swatch}`} />
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="font-display font-bold text-sm text-slate-900 dark:text-white truncate">
-                    {topPlayer.name}
-                  </span>
-                  <span className="text-xs text-slate-500 dark:text-slate-400">
-                    ({topPlayer.side})
-                  </span>
+      {/* Main Chess.com Split Workspace */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
+        <div className="xl:col-span-8 space-y-2">
+          {/* Top Player Strip + Bot Speech Bubble */}
+          <div className="max-w-[716px] mx-auto space-y-2">
+            {topPlayer.bot && botSpeech && (
+              <div className="pl-1">
+                <div className="cc-speech-bubble px-3.5 py-2 text-xs font-medium leading-snug max-w-xl">
+                  {botSpeech}
                 </div>
-                {topPlayer.isTurn && (
-                  <p className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-                    {isInCheckNow ? 'In Check · Your Turn' : 'Your Turn'}
-                  </p>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between gap-3 px-2 py-1.5">
+              <div className="flex items-center gap-2.5 min-w-0">
+                {topPlayer.bot ? (
+                  <PlayerAvatar src={topPlayer.bot.avatar} name={topPlayer.bot.name} size="sm" />
+                ) : (
+                  <span className={`w-8 h-8 rounded-md border-2 shrink-0 ${topPlayer.swatch}`} />
+                )}
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="font-display font-bold text-sm text-slate-900 dark:text-white truncate">
+                      {topPlayer.name}
+                    </span>
+                    {topPlayer.bot ? (
+                      <>
+                        <span className="font-mono text-xs text-stone-500 dark:text-[#9E9C98] tabular-nums">
+                          ({topPlayer.bot.rating})
+                        </span>
+                        {topPlayer.bot.titleTag && (
+                          <span
+                            className={`cc-title-badge ${
+                              topPlayer.bot.titleTag === 'GM'
+                                ? 'cc-title-gm'
+                                : topPlayer.bot.titleTag === 'IM'
+                                ? 'cc-title-im'
+                                : 'cc-title-fm'
+                            }`}
+                          >
+                            {topPlayer.bot.titleTag}
+                          </span>
+                        )}
+                        {topPlayer.bot.difficulty === 'ultra' && (
+                          <span className="cc-title-badge cc-title-ultra">ULTRA</span>
+                        )}
+                      </>
+                    ) : (
+                      <span className="text-xs text-stone-500 dark:text-[#9E9C98]">({topPlayer.side})</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1 min-h-[16px] mt-0.5">
+                    <div className="flex items-center -space-x-1">
+                      {topPlayer.captured.slice(0, 14).map((p, i) => (
+                        <ChessPieceSvg
+                          key={`${p}-${i}`}
+                          type={p}
+                          color={topPlayer.capturedColor}
+                          style={settings.pieceStyle}
+                          className="w-3.5 h-3.5 opacity-90"
+                        />
+                      ))}
+                    </div>
+                    {topPlayer.advantage > 0 && (
+                      <span className="font-mono text-[11px] font-bold text-stone-500 dark:text-[#9E9C98] ml-1 tabular-nums">
+                        +{topPlayer.advantage}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div
+                className={`px-3 py-1.5 rounded-[4px] font-mono text-xs font-bold tabular-nums shrink-0 flex items-center gap-1.5 ${
+                  topPlayer.isTurn
+                    ? 'bg-white dark:bg-[#F2F1EE] text-[#262421] shadow-sm'
+                    : 'bg-stone-200/70 dark:bg-[#262421] text-stone-500 dark:text-[#8B8985]'
+                }`}
+              >
+                {botThinking && topPlayer.bot ? (
+                  <>
+                    <Loader2 className="w-3 h-3 animate-spin text-[#81B64C]" />
+                    <span>Thinking</span>
+                  </>
+                ) : topPlayer.isTurn ? (
+                  <span>To Move</span>
+                ) : (
+                  <span>Waiting</span>
                 )}
               </div>
             </div>
-
-            <div className="flex items-center gap-1 shrink-0">
-              <div className="flex items-center -space-x-1.5">
-                {topPlayer.captured.slice(0, 12).map((p, i) => (
-                  <ChessPieceSvg
-                    key={`${p}-${i}`}
-                    type={p}
-                    color={topPlayer.capturedColor}
-                    style={settings.pieceStyle}
-                    className="w-4 h-4"
-                  />
-                ))}
-              </div>
-              {topPlayer.advantage > 0 && (
-                <span className="font-mono text-xs font-semibold text-slate-500 dark:text-slate-400 ml-1 tabular-nums">
-                  +{topPlayer.advantage}
-                </span>
-              )}
-            </div>
           </div>
 
-          {/* Board + Optional Eval Bar + Dismissible Game Over Overlay */}
-          <div className="max-w-[716px] mx-auto flex items-stretch gap-2.5 relative">
+          {/* EvalBar + Board */}
+          <div className="max-w-[716px] mx-auto flex items-stretch gap-2 relative">
             {showEvalBar && (
               <EvalBar
                 evalCpWhite={fastEval.cpWhite}
                 mateWhite={fastEval.mateWhite}
                 orientation={boardOrientation}
+                className="hidden sm:flex min-h-[320px]"
               />
             )}
 
-            <div className="flex-1 relative">
+            <div className="flex-1 max-w-[680px] relative">
               <ChessBoard
                 fen={displayedPos.fen}
                 orientation={boardOrientation}
-                interactive={!isGameOver && viewingPly === null}
-                allowedColor="both"
+                interactive={
+                  !isGameOver &&
+                  viewingPly === null &&
+                  !botThinking &&
+                  (!activeBot || liveTurn === humanColor)
+                }
+                allowedColor={activeBot ? humanColor : 'both'}
                 lastMove={
                   displayedPos.from && displayedPos.to
                     ? { from: displayedPos.from, to: displayedPos.to }
@@ -604,71 +797,50 @@ export const PassAndPlayArena: React.FC<PassAndPlayArenaProps> = ({
 
               {/* End-of-Game Summary Modal */}
               {isGameOver && showEndModal && (
-                <div className="absolute inset-0 z-30 bg-black/55 backdrop-blur-[2px] rounded-lg flex items-center justify-center p-4">
-                  <div className="bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl p-6 max-w-sm w-full shadow-2xl text-center space-y-4">
-                    <div className="w-12 h-12 rounded-xl bg-amber-500/15 text-amber-500 flex items-center justify-center mx-auto">
-                      <Trophy className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <h3 className="font-display text-lg font-bold text-slate-900 dark:text-white">
-                        {outcomeTitle}
-                      </h3>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                        {formatResultReason(resultReason)} · {Math.ceil(history.length / 2)} moves played
+                <div className="absolute inset-0 z-30 bg-black/55 backdrop-blur-[2px] rounded-[4px] flex items-center justify-center p-4">
+                  <div className="w-full max-w-xs sm:max-w-sm bg-white dark:bg-[#262421] border border-[#DFDDD8] dark:border-[#3C3A37] rounded-xl shadow-2xl overflow-hidden text-center">
+                    <div className="bg-[#81B64C] px-5 py-4 text-white relative">
+                      <button
+                        type="button"
+                        onClick={() => setShowEndModal(false)}
+                        aria-label="Close modal"
+                        className="absolute top-3 right-3 p-1 rounded hover:bg-black/15 text-white/90 cursor-pointer"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                      <Trophy className="w-7 h-7 mx-auto mb-1" />
+                      <h3 className="font-display text-xl font-extrabold">{outcomeTitle}</h3>
+                      <p className="text-xs text-white/90 font-medium mt-0.5">
+                        by {formatResultReason(resultReason)} · {Math.ceil(history.length / 2)} moves
                       </p>
                     </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleRematch(false)}
-                        className="py-2.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold whitespace-nowrap cursor-pointer"
-                      >
-                        Rematch
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleRematch(true)}
-                        className="py-2.5 px-3 rounded-lg bg-slate-100 dark:bg-[#222833] hover:bg-slate-200 dark:hover:bg-[#2A313D] text-slate-800 dark:text-slate-200 text-xs font-semibold inline-flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer"
-                      >
-                        <ArrowLeftRight className="w-3.5 h-3.5" />
-                        Swap & Play
-                      </button>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => void handleCopy('pgn')}
-                        className="py-2 px-3 rounded-lg bg-slate-100 dark:bg-[#222833] hover:bg-slate-200 dark:hover:bg-[#2A313D] text-slate-700 dark:text-slate-200 text-xs font-semibold inline-flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer"
-                      >
-                        {copiedType === 'pgn' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
-                        {copiedType === 'pgn' ? 'Copied PGN' : 'Copy PGN'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleDownloadPgn}
-                        className="py-2 px-3 rounded-lg bg-slate-100 dark:bg-[#222833] hover:bg-slate-200 dark:hover:bg-[#2A313D] text-slate-700 dark:text-slate-200 text-xs font-semibold inline-flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer"
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                        Export .pgn
-                      </button>
-                    </div>
-                    <div className="flex items-center gap-2">
+                    <div className="p-5 space-y-2.5">
                       <button
                         type="button"
                         disabled={sanMoves.length === 0 || analyzing}
                         onClick={() => void handleRunAnalysis()}
-                        className="flex-1 py-2 px-3 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-semibold inline-flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer"
+                        className="w-full py-3 rounded-lg btn-chess-primary text-sm inline-flex items-center justify-center gap-2 cursor-pointer"
                       >
-                        <GraduationCap className="w-3.5 h-3.5" />
-                        Coach Review
+                        <GraduationCap className="w-4 h-4" />
+                        Game Review
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => setShowEndModal(false)}
-                        className="py-2 px-3 rounded-lg text-xs font-medium text-slate-500 hover:text-slate-900 dark:hover:text-white cursor-pointer"
-                      >
-                        View Board
-                      </button>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleRematch(false)}
+                          className="py-2.5 px-3 rounded-lg btn-chess-secondary text-xs cursor-pointer"
+                        >
+                          Rematch
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRematch(true)}
+                          className="py-2.5 px-3 rounded-lg btn-chess-secondary text-xs inline-flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                          <ArrowLeftRight className="w-3.5 h-3.5" />
+                          Swap Color
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -677,53 +849,54 @@ export const PassAndPlayArena: React.FC<PassAndPlayArenaProps> = ({
           </div>
 
           {/* Bottom Player Strip */}
-          <div
-            className={`max-w-[716px] mx-auto flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl bg-white dark:bg-[#1A1E26] border transition-colors ${
-              bottomPlayer.isTurn ? 'border-emerald-500/70' : 'border-slate-200 dark:border-[#2A313D]'
-            }`}
-          >
-            <div className="flex items-center gap-3 min-w-0">
-              <span className={`w-7 h-7 rounded-lg border-2 shrink-0 ${bottomPlayer.swatch}`} />
+          <div className="max-w-[716px] mx-auto flex items-center justify-between gap-3 px-2 py-1.5">
+            <div className="flex items-center gap-2.5 min-w-0">
+              {bottomPlayer.bot ? (
+                <PlayerAvatar src={bottomPlayer.bot.avatar} name={bottomPlayer.bot.name} size="sm" />
+              ) : (
+                <span className={`w-8 h-8 rounded-md border-2 shrink-0 ${bottomPlayer.swatch}`} />
+              )}
               <div className="min-w-0">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="font-display font-bold text-sm text-slate-900 dark:text-white truncate">
                     {bottomPlayer.name}
                   </span>
-                  <span className="text-xs text-slate-500 dark:text-slate-400">
-                    ({bottomPlayer.side})
-                  </span>
+                  <span className="text-xs text-stone-500 dark:text-[#9E9C98]">({bottomPlayer.side})</span>
                 </div>
-                {bottomPlayer.isTurn && (
-                  <p className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-                    {isInCheckNow ? 'In Check · Your Turn' : 'Your Turn'}
-                  </p>
-                )}
+                <div className="flex items-center gap-1 min-h-[16px] mt-0.5">
+                  <div className="flex items-center -space-x-1">
+                    {bottomPlayer.captured.slice(0, 14).map((p, i) => (
+                      <ChessPieceSvg
+                        key={`${p}-${i}`}
+                        type={p}
+                        color={bottomPlayer.capturedColor}
+                        style={settings.pieceStyle}
+                        className="w-3.5 h-3.5 opacity-90"
+                      />
+                    ))}
+                  </div>
+                  {bottomPlayer.advantage > 0 && (
+                    <span className="font-mono text-[11px] font-bold text-stone-500 dark:text-[#9E9C98] ml-1 tabular-nums">
+                      +{bottomPlayer.advantage}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-1 shrink-0">
-              <div className="flex items-center -space-x-1.5">
-                {bottomPlayer.captured.slice(0, 12).map((p, i) => (
-                  <ChessPieceSvg
-                    key={`${p}-${i}`}
-                    type={p}
-                    color={bottomPlayer.capturedColor}
-                    style={settings.pieceStyle}
-                    className="w-4 h-4"
-                  />
-                ))}
-              </div>
-              {bottomPlayer.advantage > 0 && (
-                <span className="font-mono text-xs font-semibold text-slate-500 dark:text-slate-400 ml-1 tabular-nums">
-                  +{bottomPlayer.advantage}
-                </span>
-              )}
+            <div
+              className={`px-3 py-1.5 rounded-[4px] font-mono text-xs font-bold tabular-nums shrink-0 ${
+                bottomPlayer.isTurn
+                  ? 'bg-[#81B64C] text-white shadow-sm'
+                  : 'bg-stone-200/70 dark:bg-[#262421] text-stone-500 dark:text-[#8B8985]'
+              }`}
+            >
+              {bottomPlayer.isTurn ? 'Your Turn' : 'Waiting'}
             </div>
           </div>
 
-          {/* Coach Review Panel (when triggered) */}
           {(analyzing || analysis || analysisError) && (
-            <div className="max-w-[716px] mx-auto">
+            <div className="max-w-[716px] mx-auto pt-2">
               <GameAnalysisPanel
                 whiteName={whiteLabel}
                 blackName={blackLabel}
@@ -739,92 +912,59 @@ export const PassAndPlayArena: React.FC<PassAndPlayArenaProps> = ({
           )}
         </div>
 
-        {/* Right Sidebar: Status, Opening, Moves, Scrubbing, Draw/Takeback/Resign */}
-        <aside className="xl:col-span-4 bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl flex flex-col overflow-hidden">
-          {/* Status Header */}
-          <div className="p-4 border-b border-slate-200 dark:border-[#2A313D]">
-            {isGameOver ? (
-              <div className="space-y-2.5">
-                <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
-                  <Trophy className="w-4 h-4 shrink-0" />
-                  <span className="font-display font-bold text-sm">{outcomeTitle}</span>
-                </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {formatResultReason(resultReason)} · Local 2-Player Match
-                </p>
-                <div className="flex flex-wrap items-center gap-2 pt-1">
-                  <button
-                    type="button"
-                    onClick={() => handleRematch(false)}
-                    className="flex-1 py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer whitespace-nowrap"
-                  >
-                    New Game
-                  </button>
-                  <button
-                    type="button"
-                    disabled={sanMoves.length === 0 || analyzing}
-                    onClick={() => void handleRunAnalysis()}
-                    className="py-2 px-3 rounded-lg bg-slate-100 dark:bg-[#222833] hover:bg-slate-200 dark:hover:bg-[#2A313D] text-slate-800 dark:text-slate-200 text-xs font-semibold inline-flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer"
-                  >
-                    {analyzing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <GraduationCap className="w-3.5 h-3.5" />}
-                    Coach Review
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleDownloadPgn}
-                    className="py-2 px-3 rounded-lg bg-slate-100 dark:bg-[#222833] hover:bg-slate-200 dark:hover:bg-[#2A313D] text-slate-800 dark:text-slate-200 text-xs font-semibold inline-flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer"
-                    title="Download .pgn file"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    .pgn
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center justify-between gap-2">
-                <div>
-                  <p className="font-display font-bold text-sm text-slate-900 dark:text-white">
-                    {isInCheckNow ? 'Check! ' : ''}
-                    {liveTurn === 'w' ? `${whiteLabel} to Move` : `${blackLabel} to Move`}
-                  </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Click or drag pieces · Right-click to draw arrows
-                  </p>
-                </div>
-                <span className="font-mono text-xs text-slate-500 dark:text-slate-400 tabular-nums shrink-0">
-                  Move {Math.floor(history.length / 2) + 1}
-                </span>
-              </div>
-            )}
+        {/* Right Chess.com Console */}
+        <aside className="xl:col-span-4 bg-white dark:bg-[#262421] border border-[#DFDDD8] dark:border-[#3C3A37] rounded-xl flex flex-col overflow-hidden shadow-lg">
+          <div className="px-4 py-3 bg-stone-50 dark:bg-[#211F1C] border-b border-[#DFDDD8] dark:border-[#353330] flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <p className="font-display font-extrabold text-sm text-slate-900 dark:text-white truncate">
+                {isGameOver
+                  ? outcomeTitle
+                  : isInCheckNow
+                  ? `Check! · ${liveTurn === 'w' ? whiteLabel : blackLabel} to Move`
+                  : `${liveTurn === 'w' ? whiteLabel : blackLabel} to Move`}
+              </p>
+              <p className="text-[11px] text-stone-500 dark:text-[#9E9C98] truncate">
+                {isGameOver
+                  ? formatResultReason(resultReason)
+                  : botThinking && activeBot
+                  ? `${activeBot.name} calculating...`
+                  : 'Click or drag pieces · Right-click to draw arrows'}
+              </p>
+            </div>
+            <span className="px-2 py-0.5 rounded bg-stone-200/80 dark:bg-[#312F2C] font-mono text-[11px] font-bold text-stone-600 dark:text-[#C3C2C0] tabular-nums shrink-0">
+              Move {Math.floor(history.length / 2) + 1}
+            </span>
+          </div>
 
-            {/* Live Opening Classification */}
-            {opening && (
-              <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-[#242A35] flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
-                <BookOpen className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                <span className="font-mono text-slate-400 shrink-0">{opening.eco}</span>
-                <span className="truncate font-medium">{opening.name}</span>
-              </div>
+          <div className="px-4 py-2 bg-stone-100/70 dark:bg-[#1F1E1B] border-b border-[#DFDDD8] dark:border-[#353330] flex items-center gap-2 text-xs">
+            <BookOpen className="w-3.5 h-3.5 text-[#81B64C] shrink-0" />
+            {opening ? (
+              <>
+                <span className="font-mono font-bold text-stone-500 dark:text-[#9E9C98]">{opening.eco}</span>
+                <span className="text-slate-800 dark:text-[#E7E6E4] font-semibold truncate">{opening.name}</span>
+              </>
+            ) : (
+              <span className="text-stone-500 dark:text-[#9E9C98] font-medium">Starting Position</span>
             )}
           </div>
 
-          {/* Pending Draw Offer Banner */}
           {drawOfferedBy && !isGameOver && (
-            <div className="p-3.5 bg-amber-500/10 border-b border-amber-500/30 flex items-center justify-between gap-2">
-              <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">
+            <div className="p-3 bg-amber-500/12 border-b border-amber-500/30 flex items-center justify-between gap-2">
+              <span className="text-xs font-bold text-amber-700 dark:text-amber-300">
                 {drawOfferedBy === 'w' ? whiteLabel : blackLabel} offered a draw
               </span>
               <div className="flex gap-1.5">
                 <button
                   type="button"
                   onClick={handleAgreeDrawDirect}
-                  className="px-2.5 py-1 rounded bg-emerald-600 text-white text-xs font-semibold cursor-pointer"
+                  className="px-2.5 py-1 rounded bg-[#81B64C] text-white text-xs font-bold cursor-pointer"
                 >
                   Accept
                 </button>
                 <button
                   type="button"
                   onClick={() => setDrawOfferedBy(null)}
-                  className="px-2.5 py-1 rounded bg-slate-200 dark:bg-[#222833] text-slate-700 dark:text-slate-300 text-xs font-medium cursor-pointer"
+                  className="px-2.5 py-1 rounded bg-stone-200 dark:bg-[#312F2C] text-stone-700 dark:text-[#C3C2C0] text-xs font-semibold cursor-pointer"
                 >
                   Decline
                 </button>
@@ -832,59 +972,47 @@ export const PassAndPlayArena: React.FC<PassAndPlayArenaProps> = ({
             </div>
           )}
 
-          {/* Historical Ply Viewing Notice */}
-          {viewingPly !== null && (
-            <div className="px-4 py-2 bg-sky-500/10 border-b border-sky-500/25 flex items-center justify-between text-xs">
-              <span className="text-sky-700 dark:text-sky-300 font-medium">
-                Inspecting ply {viewingPly} of {history.length}
-              </span>
-              <button
-                type="button"
-                onClick={() => setViewingPly(null)}
-                className="font-semibold text-sky-600 dark:text-sky-400 hover:underline cursor-pointer"
-              >
-                Live Position
-              </button>
-            </div>
-          )}
-
-          {/* Move List */}
-          <div ref={moveListRef} className="flex-1 min-h-[240px] max-h-[380px] overflow-y-auto p-3">
+          {/* Zebra Move List with Figurine Notation */}
+          <div ref={moveListRef} className="flex-1 min-h-[260px] max-h-[380px] overflow-y-auto">
             {movePairs.length === 0 ? (
-              <div className="h-full min-h-[200px] flex flex-col items-center justify-center text-center text-xs text-slate-400 px-4">
+              <div className="h-full min-h-[220px] flex flex-col items-center justify-center text-center text-xs text-stone-400 dark:text-[#8B8985] px-4">
                 <p>White moves first.</p>
-                <p className="mt-1">Pass the device or play side-by-side — zero accounts or clocks.</p>
+                <p className="mt-1">
+                  {activeBot ? `Challenge ${activeBot.name} (${activeBot.rating}) right on the board.` : 'Pass the device or play side-by-side.'}
+                </p>
               </div>
             ) : (
-              <div className="space-y-0.5 font-mono text-xs tabular-nums">
-                {movePairs.map((row) => (
+              <div className="font-mono text-xs tabular-nums">
+                {movePairs.map((row, idx) => (
                   <div
                     key={row.num}
-                    className="grid grid-cols-12 items-center rounded hover:bg-slate-50 dark:hover:bg-[#202631]"
+                    className={`grid grid-cols-12 items-center px-2 py-1 ${
+                      idx % 2 === 0 ? 'bg-transparent' : 'bg-stone-50/90 dark:bg-[#2B2926]'
+                    }`}
                   >
-                    <span className="col-span-2 py-1.5 px-2 text-slate-400">{row.num}.</span>
+                    <span className="col-span-2 px-1.5 text-stone-400 dark:text-[#8B8985]">{row.num}.</span>
                     <button
                       type="button"
                       onClick={() => setViewingPly(row.wPly === history.length ? null : row.wPly)}
-                      className={`col-span-5 py-1.5 px-2 text-left rounded cursor-pointer ${
+                      className={`col-span-5 py-1 px-2 text-left rounded-[4px] font-semibold cursor-pointer ${
                         activePly === row.wPly
-                          ? 'bg-emerald-600/20 text-emerald-700 dark:text-emerald-300 font-semibold'
-                          : 'text-slate-800 dark:text-slate-200'
+                          ? 'bg-[#81B64C]/25 dark:bg-[#48453F] text-slate-900 dark:text-white font-bold'
+                          : 'text-slate-800 dark:text-[#DFDEDB] hover:bg-stone-200/60 dark:hover:bg-[#383531]'
                       }`}
                     >
-                      {row.white}
+                      {formatSanWithFigurine(row.white, 'w')}
                     </button>
                     {row.black ? (
                       <button
                         type="button"
                         onClick={() => setViewingPly(row.bPly === history.length ? null : (row.bPly ?? null))}
-                        className={`col-span-5 py-1.5 px-2 text-left rounded cursor-pointer ${
+                        className={`col-span-5 py-1 px-2 text-left rounded-[4px] font-semibold cursor-pointer ${
                           activePly === row.bPly
-                            ? 'bg-emerald-600/20 text-emerald-700 dark:text-emerald-300 font-semibold'
-                            : 'text-slate-800 dark:text-slate-200'
+                            ? 'bg-[#81B64C]/25 dark:bg-[#48453F] text-slate-900 dark:text-white font-bold'
+                            : 'text-slate-800 dark:text-[#DFDEDB] hover:bg-stone-200/60 dark:hover:bg-[#383531]'
                         }`}
                       >
-                        {row.black}
+                        {formatSanWithFigurine(row.black, 'b')}
                       </button>
                     ) : (
                       <span className="col-span-5" />
@@ -896,14 +1024,13 @@ export const PassAndPlayArena: React.FC<PassAndPlayArenaProps> = ({
           </div>
 
           {/* Scrubber & Utility Bar */}
-          <div className="px-3 py-2 border-t border-slate-200 dark:border-[#2A313D] flex items-center justify-between gap-1 bg-slate-50 dark:bg-[#14181F]">
+          <div className="px-3 py-2 border-t border-[#DFDDD8] dark:border-[#353330] flex items-center justify-between gap-1 bg-stone-50 dark:bg-[#1F1E1B]">
             <div className="flex items-center gap-0.5">
               <button
                 type="button"
                 disabled={history.length === 0}
                 onClick={() => setViewingPly(0)}
-                className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-[#222833] text-slate-600 dark:text-slate-300 disabled:opacity-35 cursor-pointer"
-                title="Start position (Home)"
+                className="p-1.5 rounded hover:bg-stone-200 dark:hover:bg-[#312F2C] text-stone-600 dark:text-[#C3C2C0] disabled:opacity-35 cursor-pointer"
               >
                 <SkipBack className="w-4 h-4" />
               </button>
@@ -911,8 +1038,7 @@ export const PassAndPlayArena: React.FC<PassAndPlayArenaProps> = ({
                 type="button"
                 disabled={activePly <= 0}
                 onClick={() => setViewingPly(Math.max(0, activePly - 1))}
-                className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-[#222833] text-slate-600 dark:text-slate-300 disabled:opacity-35 cursor-pointer"
-                title="Previous move (←)"
+                className="p-1.5 rounded hover:bg-stone-200 dark:hover:bg-[#312F2C] text-stone-600 dark:text-[#C3C2C0] disabled:opacity-35 cursor-pointer"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
@@ -923,8 +1049,7 @@ export const PassAndPlayArena: React.FC<PassAndPlayArenaProps> = ({
                   const next = activePly + 1;
                   setViewingPly(next >= history.length ? null : next);
                 }}
-                className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-[#222833] text-slate-600 dark:text-slate-300 disabled:opacity-35 cursor-pointer"
-                title="Next move (→)"
+                className="p-1.5 rounded hover:bg-stone-200 dark:hover:bg-[#312F2C] text-stone-600 dark:text-[#C3C2C0] disabled:opacity-35 cursor-pointer"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -932,8 +1057,7 @@ export const PassAndPlayArena: React.FC<PassAndPlayArenaProps> = ({
                 type="button"
                 disabled={viewingPly === null}
                 onClick={() => setViewingPly(null)}
-                className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-[#222833] text-slate-600 dark:text-slate-300 disabled:opacity-35 cursor-pointer"
-                title="Live position (End)"
+                className="p-1.5 rounded hover:bg-stone-200 dark:hover:bg-[#312F2C] text-stone-600 dark:text-[#C3C2C0] disabled:opacity-35 cursor-pointer"
               >
                 <SkipForward className="w-4 h-4" />
               </button>
@@ -946,7 +1070,7 @@ export const PassAndPlayArena: React.FC<PassAndPlayArenaProps> = ({
                   setAutoFlip(false);
                   setManualFlipped((f) => !f);
                 }}
-                className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-[#222833] text-slate-600 dark:text-slate-300 cursor-pointer"
+                className="p-1.5 rounded hover:bg-stone-200 dark:hover:bg-[#312F2C] text-stone-600 dark:text-[#C3C2C0] cursor-pointer"
                 title="Flip board (F)"
               >
                 <RotateCcw className="w-4 h-4" />
@@ -954,63 +1078,113 @@ export const PassAndPlayArena: React.FC<PassAndPlayArenaProps> = ({
               <button
                 type="button"
                 onClick={onToggleSound}
-                className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-[#222833] text-slate-600 dark:text-slate-300 cursor-pointer"
-                title={settings.soundEnabled ? 'Mute sounds' : 'Enable sounds'}
+                className="p-1.5 rounded hover:bg-stone-200 dark:hover:bg-[#312F2C] text-stone-600 dark:text-[#C3C2C0] cursor-pointer"
               >
                 {settings.soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
               </button>
               <button
                 type="button"
                 onClick={() => void handleCopy('pgn')}
-                className="px-2 py-1 rounded hover:bg-slate-200 dark:hover:bg-[#222833] text-slate-600 dark:text-slate-300 text-[11px] font-semibold inline-flex items-center gap-1 cursor-pointer"
-                title="Copy full PGN"
+                className="px-2 py-1 rounded hover:bg-stone-200 dark:hover:bg-[#312F2C] text-[11px] font-mono font-bold text-stone-600 dark:text-[#C3C2C0] cursor-pointer"
               >
-                {copiedType === 'pgn' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
-                PGN
+                {copiedType === 'pgn' ? '✓ PGN' : 'PGN'}
               </button>
               <button
                 type="button"
                 onClick={handleDownloadPgn}
-                className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-[#222833] text-slate-600 dark:text-slate-300 cursor-pointer"
-                title="Download .pgn file"
+                className="p-1.5 rounded hover:bg-stone-200 dark:hover:bg-[#312F2C] text-stone-600 dark:text-[#C3C2C0] cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" />
               </button>
               <button
                 type="button"
                 onClick={() => void handleCopy('fen')}
-                className="px-2 py-1 rounded hover:bg-slate-200 dark:hover:bg-[#222833] text-slate-600 dark:text-slate-300 text-[11px] font-semibold inline-flex items-center gap-1 cursor-pointer"
-                title="Copy FEN"
+                className="px-2 py-1 rounded hover:bg-stone-200 dark:hover:bg-[#312F2C] text-[11px] font-mono font-bold text-stone-600 dark:text-[#C3C2C0] cursor-pointer"
               >
-                {copiedType === 'fen' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
-                FEN
+                {copiedType === 'fen' ? '✓ FEN' : 'FEN'}
               </button>
             </div>
           </div>
 
-          {/* Match Controls: Takeback, Agree Draw, Resign */}
-          <div className="p-3.5 border-t border-slate-200 dark:border-[#2A313D] space-y-2">
-            {confirmResign && !isGameOver ? (
+          {/* Match Controls */}
+          <div className="p-3.5 border-t border-[#DFDDD8] dark:border-[#353330] space-y-2">
+            {isGameOver ? (
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  disabled={sanMoves.length === 0 || analyzing}
+                  onClick={() => void handleRunAnalysis()}
+                  className="w-full py-2.5 px-4 rounded-lg btn-chess-primary text-xs sm:text-sm inline-flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <GraduationCap className="w-4 h-4" />
+                  {analyzing ? 'Reviewing...' : 'Game Review'}
+                </button>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleRematch(false)}
+                    className="py-2 rounded-lg btn-chess-secondary text-xs cursor-pointer"
+                  >
+                    New Game
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleRematch(true)}
+                    className="py-2 rounded-lg btn-chess-secondary text-xs inline-flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <ArrowLeftRight className="w-3.5 h-3.5" />
+                    Swap Color
+                  </button>
+                </div>
+              </div>
+            ) : confirmResign ? (
               <div className="flex items-center justify-between gap-2 p-2.5 rounded-lg bg-red-500/10 border border-red-500/30">
-                <span className="text-xs font-semibold text-red-600 dark:text-red-400">
-                  Resign as {liveTurn === 'w' ? whiteLabel : blackLabel}?
-                </span>
+                <span className="text-xs font-bold text-red-600 dark:text-red-400">Resign game?</span>
                 <div className="flex gap-1.5">
                   <button
                     type="button"
                     onClick={handleResignCurrentSide}
-                    className="px-3 py-1 rounded bg-red-600 hover:bg-red-700 text-white text-xs font-semibold cursor-pointer"
+                    className="px-3 py-1 rounded bg-red-600 hover:bg-red-700 text-white text-xs font-bold cursor-pointer"
                   >
                     Resign
                   </button>
                   <button
                     type="button"
                     onClick={() => setConfirmResign(false)}
-                    className="px-2.5 py-1 rounded bg-slate-200 dark:bg-[#222833] text-slate-700 dark:text-slate-300 text-xs font-medium cursor-pointer"
+                    className="px-2.5 py-1 rounded bg-stone-200 dark:bg-[#312F2C] text-stone-700 dark:text-[#C3C2C0] text-xs font-semibold cursor-pointer"
                   >
                     Cancel
                   </button>
                 </div>
+              </div>
+            ) : activeBot ? (
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  disabled={history.length === 0 || botThinking}
+                  onClick={handleTakeback}
+                  className="py-2 px-2.5 rounded-lg btn-chess-secondary text-xs inline-flex items-center justify-center gap-1.5 disabled:opacity-40 cursor-pointer"
+                >
+                  <Undo2 className="w-3.5 h-3.5" />
+                  Takeback
+                </button>
+                <button
+                  type="button"
+                  disabled={botThinking || liveTurn !== humanColor}
+                  onClick={handleRequestHint}
+                  className="py-2 px-2.5 rounded-lg btn-chess-secondary text-xs inline-flex items-center justify-center gap-1.5 disabled:opacity-40 cursor-pointer"
+                >
+                  <Lightbulb className="w-3.5 h-3.5 text-amber-400" />
+                  Hint
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmResign(true)}
+                  className="py-2 px-2.5 rounded-lg btn-chess-secondary text-xs inline-flex items-center justify-center gap-1.5 hover:!text-red-400 cursor-pointer"
+                >
+                  <Flag className="w-3.5 h-3.5" />
+                  Resign
+                </button>
               </div>
             ) : (
               <div className="grid grid-cols-3 gap-2">
@@ -1018,26 +1192,23 @@ export const PassAndPlayArena: React.FC<PassAndPlayArenaProps> = ({
                   type="button"
                   disabled={history.length === 0}
                   onClick={handleTakeback}
-                  className="py-2 px-2.5 rounded-lg bg-slate-100 dark:bg-[#222833] hover:bg-slate-200 dark:hover:bg-[#2A313D] text-slate-700 dark:text-slate-200 text-xs font-semibold inline-flex items-center justify-center gap-1.5 whitespace-nowrap disabled:opacity-40 cursor-pointer"
-                  title="Undo last move"
+                  className="py-2 px-2.5 rounded-lg btn-chess-secondary text-xs inline-flex items-center justify-center gap-1.5 disabled:opacity-40 cursor-pointer"
                 >
                   <Undo2 className="w-3.5 h-3.5" />
                   Takeback
                 </button>
                 <button
                   type="button"
-                  disabled={isGameOver}
                   onClick={handleOfferOrAcceptDraw}
-                  className="py-2 px-2.5 rounded-lg bg-slate-100 dark:bg-[#222833] hover:bg-slate-200 dark:hover:bg-[#2A313D] text-slate-700 dark:text-slate-200 text-xs font-semibold inline-flex items-center justify-center gap-1.5 whitespace-nowrap disabled:opacity-40 cursor-pointer"
+                  className="py-2 px-2.5 rounded-lg btn-chess-secondary text-xs inline-flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Handshake className="w-3.5 h-3.5" />
-                  {drawOfferedBy ? 'Accept Draw' : 'Draw'}
+                  {drawOfferedBy ? 'Accept' : 'Draw'}
                 </button>
                 <button
                   type="button"
-                  disabled={isGameOver}
                   onClick={() => setConfirmResign(true)}
-                  className="py-2 px-2.5 rounded-lg bg-red-500/10 hover:bg-red-600 text-red-600 dark:text-red-400 hover:text-white text-xs font-semibold inline-flex items-center justify-center gap-1.5 whitespace-nowrap disabled:opacity-40 cursor-pointer"
+                  className="py-2 px-2.5 rounded-lg btn-chess-secondary text-xs inline-flex items-center justify-center gap-1.5 hover:!text-red-400 cursor-pointer"
                 >
                   <Flag className="w-3.5 h-3.5" />
                   Resign

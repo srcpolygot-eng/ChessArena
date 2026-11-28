@@ -6,11 +6,34 @@
     --font-display: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     --font-body: 'DM Sans', system-ui, -apple-system, sans-serif;
     --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+
+    /* Chess.com-inspired Light Mode Surface Tokens */
+    --cc-bg: #edece9;
+    --cc-surface: #ffffff;
+    --cc-surface-alt: #f6f5f2;
+    --cc-well: #f0efec;
+    --cc-border: #dfddd8;
+    --cc-green: #81b64c;
+    --cc-green-hover: #95bb4a;
+    --cc-green-shadow: #537133;
+  }
+
+  .dark {
+    /* Chess.com Signature Warm Slate-Walnut Dark Mode Tokens */
+    --cc-bg: #302e2b;
+    --cc-surface: #262421;
+    --cc-surface-alt: #2b2926;
+    --cc-well: #1f1e1b;
+    --cc-border: #3c3a37;
+    --cc-green: #81b64c;
+    --cc-green-hover: #95bb4a;
+    --cc-green-shadow: #456028;
   }
 
   html {
     font-family: var(--font-body);
     scroll-behavior: smooth;
+    background-color: var(--cc-bg);
   }
 
   h1, h2, h3, h4, .font-display {
@@ -23,7 +46,127 @@
   }
 }
 
-/* Custom subtle scrollbars for move history and lists */
+/* Signature Chess.com 3D Beveled Tournament Green CTA Button */
+.btn-chess-primary {
+  background-color: #81b64c;
+  color: #ffffff;
+  font-family: var(--font-display);
+  font-weight: 800;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+  box-shadow: 0 4px 0 #537133, inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: background-color 120ms ease, transform 80ms ease, box-shadow 80ms ease;
+}
+
+.btn-chess-primary:hover:not(:disabled) {
+  background-color: #95bb4a;
+}
+
+.btn-chess-primary:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #537133, inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.btn-chess-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Chess.com Tactile Neutral Control Button */
+.btn-chess-secondary {
+  background-color: #e5e3de;
+  color: #262421;
+  font-weight: 700;
+  box-shadow: 0 3px 0 #c6c3bc;
+  transition: background-color 120ms ease, transform 80ms ease, box-shadow 80ms ease;
+}
+
+.dark .btn-chess-secondary {
+  background-color: #3c3a37;
+  color: #e7e6e4;
+  box-shadow: 0 3px 0 #1b1a18;
+}
+
+.btn-chess-secondary:hover:not(:disabled) {
+  background-color: #dad7d0;
+}
+
+.dark .btn-chess-secondary:hover:not(:disabled) {
+  background-color: #484542;
+}
+
+.btn-chess-secondary:active:not(:disabled) {
+  transform: translateY(1.5px);
+  box-shadow: 0 1.5px 0 #1b1a18;
+}
+
+/* Chess.com Panel & Card Surfaces */
+.cc-card {
+  background-color: var(--cc-surface);
+  border: 1px solid var(--cc-border);
+}
+
+.cc-well {
+  background-color: var(--cc-well);
+  border: 1px solid var(--cc-border);
+}
+
+/* Chess.com FIDE / Engine Title Badges */
+.cc-title-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.35;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.cc-title-gm {
+  background-color: #b33430;
+  color: #ffffff;
+}
+
+.cc-title-im {
+  background-color: #d97706;
+  color: #ffffff;
+}
+
+.cc-title-fm {
+  background-color: #0d9488;
+  color: #ffffff;
+}
+
+.cc-title-ultra {
+  background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);
+  color: #ffffff;
+}
+
+/* Chess.com Bot Speech Bubble */
+.cc-speech-bubble {
+  position: relative;
+  background-color: #ffffff;
+  color: #262421;
+  border-radius: 10px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+}
+
+.cc-speech-bubble::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 14px;
+  width: 12px;
+  height: 12px;
+  background-color: #ffffff;
+  transform: rotate(45deg);
+  border-radius: 2px;
+}
+
+/* Subtle Chess.com scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -34,12 +177,12 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.25);
+  background: rgba(160, 156, 148, 0.28);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.45);
+  background: rgba(160, 156, 148, 0.48);
 }
 
 @media (prefers-reduced-motion: reduce) {

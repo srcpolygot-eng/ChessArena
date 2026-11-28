@@ -361,12 +361,12 @@ export const PuzzlesView: React.FC<PuzzlesViewProps> = ({
               {user.puzzlesSolved} / {CHESS_PUZZLES.length}
             </span>
           </div>
-          <div className="h-7 w-px bg-slate-200 dark:bg-[#2A313D]" />
+          <div className="h-7 w-px bg-slate-200 dark:bg-[#3C3A37]" />
           <div>
             <span className="text-slate-500 dark:text-slate-400 text-xs block">Puzzle Elo</span>
             <span className="font-bold text-amber-600 dark:text-amber-400">{user.puzzleRating}</span>
           </div>
-          <div className="h-7 w-px bg-slate-200 dark:bg-[#2A313D]" />
+          <div className="h-7 w-px bg-slate-200 dark:bg-[#3C3A37]" />
           <div>
             <span className="text-slate-500 dark:text-slate-400 text-xs block">Rush Best</span>
             <span className="font-bold text-emerald-600 dark:text-emerald-400">
@@ -377,7 +377,7 @@ export const PuzzlesView: React.FC<PuzzlesViewProps> = ({
       </div>
 
       {/* Mode Switcher */}
-      <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] w-fit">
+      <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] w-fit">
         {(
           [
             { id: 'daily', label: 'Daily Puzzle', icon: Calendar },
@@ -402,7 +402,7 @@ export const PuzzlesView: React.FC<PuzzlesViewProps> = ({
               className={`px-3.5 py-2 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
                 active
                   ? 'bg-emerald-600 text-white'
-                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#222833]'
+                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#312F2C]'
               }`}
             >
               <Icon className="w-3.5 h-3.5" />
@@ -415,7 +415,7 @@ export const PuzzlesView: React.FC<PuzzlesViewProps> = ({
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
         {/* Left/Center: Interactive Puzzle Board */}
         <div className="xl:col-span-7 space-y-4">
-          <div className="max-w-[680px] mx-auto bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl p-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="max-w-[680px] mx-auto bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] rounded-xl p-4 flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="font-display text-base font-bold text-slate-900 dark:text-white">
@@ -460,7 +460,7 @@ export const PuzzlesView: React.FC<PuzzlesViewProps> = ({
         <div className="xl:col-span-5 space-y-5">
           {/* Daily Puzzle Banner */}
           {mode === 'daily' && (
-            <div className="bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl p-5 space-y-3">
+            <div className="bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] rounded-xl p-5 space-y-3">
               <div className="flex items-center justify-between gap-2">
                 <span className="font-display text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                   <Flame className="w-4 h-4 text-amber-500" />
@@ -483,7 +483,7 @@ export const PuzzlesView: React.FC<PuzzlesViewProps> = ({
 
           {/* Puzzle Rush / Survival HUD */}
           {isMarathon && (
-            <div className="bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl p-5 space-y-4">
+            <div className="bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] rounded-xl p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="font-display text-base font-bold text-slate-900 dark:text-white">
                   {mode === 'rush' ? 'Puzzle Rush · 3-Minute Blitz' : 'Puzzle Survival · Escalating'}
@@ -504,7 +504,7 @@ export const PuzzlesView: React.FC<PuzzlesViewProps> = ({
 
               <div className="grid grid-cols-3 gap-3 text-center">
                 {mode === 'rush' && (
-                  <div className="p-3 rounded-lg bg-slate-50 dark:bg-[#14181F] border border-slate-200 dark:border-[#242A35]">
+                  <div className="p-3 rounded-lg bg-slate-50 dark:bg-[#1F1E1B] border border-slate-200 dark:border-[#353330]">
                     <p className="text-[11px] text-slate-500 flex items-center justify-center gap-1">
                       <Timer className="w-3 h-3" /> Time
                     </p>
@@ -513,13 +513,13 @@ export const PuzzlesView: React.FC<PuzzlesViewProps> = ({
                     </p>
                   </div>
                 )}
-                <div className="p-3 rounded-lg bg-slate-50 dark:bg-[#14181F] border border-slate-200 dark:border-[#242A35]">
+                <div className="p-3 rounded-lg bg-slate-50 dark:bg-[#1F1E1B] border border-slate-200 dark:border-[#353330]">
                   <p className="text-[11px] text-slate-500">Score</p>
                   <p className="font-mono text-xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums mt-0.5">
                     {runScore}
                   </p>
                 </div>
-                <div className="p-3 rounded-lg bg-slate-50 dark:bg-[#14181F] border border-slate-200 dark:border-[#242A35]">
+                <div className="p-3 rounded-lg bg-slate-50 dark:bg-[#1F1E1B] border border-slate-200 dark:border-[#353330]">
                   <p className="text-[11px] text-slate-500">Personal Best</p>
                   <p className="font-mono text-xl font-bold text-amber-500 tabular-nums mt-0.5">
                     {Math.max(progression?.puzzleRushBest ?? 0, runScore)}
@@ -537,7 +537,7 @@ export const PuzzlesView: React.FC<PuzzlesViewProps> = ({
                 <button
                   type="button"
                   onClick={() => startTimedOrSurvivalRun(mode)}
-                  className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold inline-flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full py-3 rounded-xl btn-chess-primary text-sm font-semibold inline-flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <Play className="w-4 h-4 fill-current" />
                   {runOver ? 'Play Again' : mode === 'rush' ? 'Start 3-Minute Rush' : 'Start Survival Run'}
@@ -547,14 +547,14 @@ export const PuzzlesView: React.FC<PuzzlesViewProps> = ({
           )}
 
           {/* Status & Controls Card */}
-          <div className="bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl p-5 space-y-4">
+          <div className="bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] rounded-xl p-5 space-y-4">
             <div
               className={`p-4 rounded-lg border text-sm flex items-start gap-3 ${
                 status === 'solved'
                   ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-300'
                   : status === 'wrong'
                   ? 'bg-red-500/10 border-red-500/30 text-red-700 dark:text-red-300'
-                  : 'bg-slate-50 dark:bg-[#12151A] border-slate-200 dark:border-[#2A313D] text-slate-700 dark:text-slate-300'
+                  : 'bg-slate-50 dark:bg-[#1F1E1B] border-slate-200 dark:border-[#3C3A37] text-slate-700 dark:text-slate-300'
               }`}
             >
               {status === 'solved' ? (
@@ -610,7 +610,7 @@ export const PuzzlesView: React.FC<PuzzlesViewProps> = ({
                 <button
                   type="button"
                   onClick={handleRetry}
-                  className="py-2.5 px-3.5 rounded-lg bg-slate-100 dark:bg-[#222833] hover:bg-slate-200 dark:hover:bg-[#2A313D] text-slate-700 dark:text-slate-200 text-xs font-semibold inline-flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer"
+                  className="py-2.5 px-3.5 rounded-lg bg-slate-100 dark:bg-[#312F2C] hover:bg-slate-200 dark:hover:bg-[#3C3A37] text-slate-700 dark:text-slate-200 text-xs font-semibold inline-flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   Reset
@@ -620,7 +620,7 @@ export const PuzzlesView: React.FC<PuzzlesViewProps> = ({
                   <button
                     type="button"
                     onClick={handleNextPuzzle}
-                    className="flex-1 py-2.5 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold inline-flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer"
+                    className="flex-1 py-2.5 px-4 rounded-lg btn-chess-primary text-xs font-semibold inline-flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer"
                   >
                     Next
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -639,12 +639,12 @@ export const PuzzlesView: React.FC<PuzzlesViewProps> = ({
 
           {/* Puzzle Library List (Shown in Library Mode) */}
           {mode === 'library' && (
-            <div className="bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl p-5 space-y-4">
+            <div className="bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] rounded-xl p-5 space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h3 className="font-display text-sm font-bold text-slate-900 dark:text-white">
                   Puzzle Library ({filteredPuzzles.length})
                 </h3>
-                <div className="flex flex-wrap items-center gap-1 p-0.5 rounded-lg bg-slate-100 dark:bg-[#12151A]">
+                <div className="flex flex-wrap items-center gap-1 p-0.5 rounded-lg bg-slate-100 dark:bg-[#1F1E1B]">
                   {(['All', 'Beginner', 'Intermediate', 'Advanced', 'Master'] as const).map((tier) => (
                     <button
                       key={tier}
@@ -652,7 +652,7 @@ export const PuzzlesView: React.FC<PuzzlesViewProps> = ({
                       onClick={() => setDifficultyFilter(tier)}
                       className={`px-2 py-1 rounded-md text-[11px] font-semibold transition-colors cursor-pointer ${
                         difficultyFilter === tier
-                          ? 'bg-white dark:bg-[#222833] text-slate-900 dark:text-white shadow-sm'
+                          ? 'bg-white dark:bg-[#312F2C] text-slate-900 dark:text-white shadow-sm'
                           : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                       }`}
                     >
@@ -674,7 +674,7 @@ export const PuzzlesView: React.FC<PuzzlesViewProps> = ({
                       className={`w-full text-left px-3 py-2.5 rounded-lg flex items-center justify-between gap-3 transition-colors cursor-pointer ${
                         isSelected
                           ? 'bg-emerald-600/12 border border-emerald-500/40'
-                          : 'hover:bg-slate-50 dark:hover:bg-[#1F242E] border border-transparent'
+                          : 'hover:bg-slate-50 dark:hover:bg-[#312F2C] border border-transparent'
                       }`}
                     >
                       <div className="min-w-0">

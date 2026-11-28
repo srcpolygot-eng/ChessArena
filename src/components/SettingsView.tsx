@@ -107,12 +107,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       )}
 
       {/* Appearance & Theme */}
-      <section className="bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl p-6 space-y-5">
+      <section className="bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] rounded-xl p-6 space-y-5">
         <h2 className="font-display text-base font-bold text-slate-900 dark:text-white">
           Interface & Audio
         </h2>
 
-        <div className="divide-y divide-slate-100 dark:divide-[#242A35]">
+        <div className="divide-y divide-slate-100 dark:divide-[#353330]">
           {/* Light / Dark Mode */}
           <div className="py-4 first:pt-0 flex flex-wrap items-center justify-between gap-4">
             <div>
@@ -121,13 +121,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 Switch between tournament dark mode and bright light mode.
               </p>
             </div>
-            <div className="flex items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-[#12151A]">
+            <div className="flex items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-[#1F1E1B]">
               <button
                 type="button"
                 onClick={() => void patchSettings({ theme: 'dark' })}
                 className={`px-3.5 py-1.5 rounded-md text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer ${
                   settings.theme === 'dark'
-                    ? 'bg-white dark:bg-[#222833] text-slate-900 dark:text-white shadow-sm'
+                    ? 'bg-white dark:bg-[#312F2C] text-slate-900 dark:text-white shadow-sm'
                     : 'text-slate-500 dark:text-slate-400'
                 }`}
               >
@@ -139,7 +139,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 onClick={() => void patchSettings({ theme: 'light' })}
                 className={`px-3.5 py-1.5 rounded-md text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer ${
                   settings.theme === 'light'
-                    ? 'bg-white dark:bg-[#222833] text-slate-900 dark:text-white shadow-sm'
+                    ? 'bg-white dark:bg-[#312F2C] text-slate-900 dark:text-white shadow-sm'
                     : 'text-slate-500 dark:text-slate-400'
                 }`}
               >
@@ -164,7 +164,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 className={`px-4 py-2 rounded-lg text-xs font-semibold inline-flex items-center gap-2 transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                   settings.soundEnabled
                     ? 'bg-emerald-600 text-white'
-                    : 'bg-slate-200 dark:bg-[#222833] text-slate-700 dark:text-slate-300'
+                    : 'bg-slate-200 dark:bg-[#312F2C] text-slate-700 dark:text-slate-300'
                 }`}
               >
                 {settings.soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
@@ -220,7 +220,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         key={cue.type}
                         type="button"
                         onClick={() => playSound(cue.type, { force: true })}
-                        className="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-[#222833] hover:bg-slate-200 dark:hover:bg-[#2A313D] text-slate-700 dark:text-slate-200 text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                        className="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-[#312F2C] hover:bg-slate-200 dark:hover:bg-[#3C3A37] text-slate-700 dark:text-slate-200 text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer"
                       >
                         {cue.label}
                       </button>
@@ -245,7 +245,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               className={`px-4 py-2 rounded-lg text-xs font-semibold inline-flex items-center gap-2 transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                 settings.animationsEnabled
                   ? 'bg-emerald-600 text-white'
-                  : 'bg-slate-200 dark:bg-[#222833] text-slate-700 dark:text-slate-300'
+                  : 'bg-slate-200 dark:bg-[#312F2C] text-slate-700 dark:text-slate-300'
               }`}
             >
               <Sparkles className="w-4 h-4" />
@@ -257,11 +257,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
       {/* Chess.com-style Gameplay Controls */}
       {onUpdateLocalPrefs && (
-        <section className="bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl p-6 space-y-4">
+        <section className="bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] rounded-xl p-6 space-y-4">
           <h2 className="font-display text-base font-bold text-slate-900 dark:text-white">
             Gameplay Controls
           </h2>
-          <div className="divide-y divide-slate-100 dark:divide-[#242A35]">
+          <div className="divide-y divide-slate-100 dark:divide-[#353330]">
             <div className="py-3.5 first:pt-0 flex flex-wrap items-center justify-between gap-4">
               <div>
                 <p className="text-sm font-semibold text-slate-900 dark:text-white">Enable Premoves</p>
@@ -275,7 +275,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 className={`px-4 py-2 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                   localPrefs.enablePremoves
                     ? 'bg-emerald-600 text-white'
-                    : 'bg-slate-200 dark:bg-[#222833] text-slate-700 dark:text-slate-300'
+                    : 'bg-slate-200 dark:bg-[#312F2C] text-slate-700 dark:text-slate-300'
                 }`}
               >
                 {localPrefs.enablePremoves ? 'On' : 'Off'}
@@ -295,7 +295,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 className={`px-4 py-2 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                   localPrefs.autoQueen
                     ? 'bg-emerald-600 text-white'
-                    : 'bg-slate-200 dark:bg-[#222833] text-slate-700 dark:text-slate-300'
+                    : 'bg-slate-200 dark:bg-[#312F2C] text-slate-700 dark:text-slate-300'
                 }`}
               >
                 {localPrefs.autoQueen ? 'On' : 'Off'}
@@ -315,7 +315,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 className={`px-4 py-2 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                   localPrefs.showCoordinates
                     ? 'bg-emerald-600 text-white'
-                    : 'bg-slate-200 dark:bg-[#222833] text-slate-700 dark:text-slate-300'
+                    : 'bg-slate-200 dark:bg-[#312F2C] text-slate-700 dark:text-slate-300'
                 }`}
               >
                 {localPrefs.showCoordinates ? 'Visible' : 'Hidden'}
@@ -326,7 +326,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       )}
 
       {/* Board Color Selection */}
-      <section className="bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl p-6 space-y-4">
+      <section className="bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] rounded-xl p-6 space-y-4">
         <div>
           <h2 className="font-display text-base font-bold text-slate-900 dark:text-white">
             Chessboard Palette
@@ -348,7 +348,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
                   active
                     ? 'border-emerald-500 ring-1 ring-emerald-500 bg-emerald-500/8'
-                    : 'border-slate-200 dark:border-[#2A313D] hover:border-slate-400'
+                    : 'border-slate-200 dark:border-[#3C3A37] hover:border-slate-400'
                 }`}
               >
                 <div className="grid grid-cols-4 grid-rows-2 rounded-md overflow-hidden aspect-[2/1] mb-2.5 ring-1 ring-black/15">
@@ -367,7 +367,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       </section>
 
       {/* Piece Style Selection */}
-      <section className="bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl p-6 space-y-4">
+      <section className="bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] rounded-xl p-6 space-y-4">
         <div>
           <h2 className="font-display text-base font-bold text-slate-900 dark:text-white">
             Piece Style
@@ -394,7 +394,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
                   active
                     ? 'border-emerald-500 ring-1 ring-emerald-500 bg-emerald-500/8'
-                    : 'border-slate-200 dark:border-[#2A313D] hover:border-slate-400'
+                    : 'border-slate-200 dark:border-[#3C3A37] hover:border-slate-400'
                 }`}
               >
                 <div className="flex items-center gap-2 mb-3 p-2.5 rounded-lg bg-[#769656]/25">
@@ -412,7 +412,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       </section>
 
       {/* Account & Profile Settings */}
-      <section className="bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl p-6 space-y-4">
+      <section className="bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] rounded-xl p-6 space-y-4">
         <h2 className="font-display text-base font-bold text-slate-900 dark:text-white">
           Account & Security
         </h2>
@@ -430,7 +430,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <button
             type="button"
             onClick={onOpenProfile}
-            className="px-4 py-2 rounded-lg bg-slate-100 dark:bg-[#222833] hover:bg-slate-200 dark:hover:bg-[#2A313D] text-slate-800 dark:text-slate-200 text-xs font-semibold inline-flex items-center gap-2 transition-colors cursor-pointer"
+            className="px-4 py-2 rounded-lg bg-slate-100 dark:bg-[#312F2C] hover:bg-slate-200 dark:hover:bg-[#3C3A37] text-slate-800 dark:text-slate-200 text-xs font-semibold inline-flex items-center gap-2 transition-colors cursor-pointer"
           >
             <UserCircle className="w-4 h-4" />
             Edit Profile & Username
@@ -439,7 +439,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <button
             type="button"
             onClick={() => void handlePasswordReset()}
-            className="px-4 py-2 rounded-lg bg-slate-100 dark:bg-[#222833] hover:bg-slate-200 dark:hover:bg-[#2A313D] text-slate-800 dark:text-slate-200 text-xs font-semibold inline-flex items-center gap-2 transition-colors cursor-pointer"
+            className="px-4 py-2 rounded-lg bg-slate-100 dark:bg-[#312F2C] hover:bg-slate-200 dark:hover:bg-[#3C3A37] text-slate-800 dark:text-slate-200 text-xs font-semibold inline-flex items-center gap-2 transition-colors cursor-pointer"
           >
             <KeyRound className="w-4 h-4" />
             Send Password Reset Email

@@ -32,8 +32,8 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-[#F6F7F9] dark:bg-[#12151A] flex items-center justify-center p-6">
-          <div className="max-w-md w-full bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl p-6 text-center">
+        <div className="min-h-screen bg-[#F6F7F9] dark:bg-[#1F1E1B] flex items-center justify-center p-6">
+          <div className="max-w-md w-full bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] rounded-xl p-6 text-center">
             <div className="w-12 h-12 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center mx-auto mb-4">
               <AlertTriangle className="w-6 h-6" />
             </div>
@@ -46,7 +46,7 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold transition-colors cursor-pointer"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg btn-chess-primary text-sm font-semibold transition-colors cursor-pointer"
             >
               <RefreshCw className="w-4 h-4" />
               Reload Chess Arena

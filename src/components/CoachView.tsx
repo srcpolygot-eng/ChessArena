@@ -541,7 +541,7 @@ export const CoachView: React.FC<CoachViewProps> = ({
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-1 p-1 rounded-xl bg-slate-100 dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D]">
+        <div className="flex flex-wrap items-center gap-1 p-1 rounded-xl bg-slate-100 dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37]">
           {(
             [
               { id: 'play', label: 'Play with Coach', icon: Swords },
@@ -560,7 +560,7 @@ export const CoachView: React.FC<CoachViewProps> = ({
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
                   active
                     ? 'bg-emerald-600 text-white'
-                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-[#222833]'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-[#312F2C]'
                 }`}
               >
                 <Icon className="w-3.5 h-3.5" />
@@ -629,7 +629,7 @@ export const CoachView: React.FC<CoachViewProps> = ({
                     type="button"
                     onClick={handleCoachUndo}
                     disabled={coachMoves.length === 0 || coachThinking}
-                    className="px-3 py-2 rounded-lg bg-slate-100 dark:bg-[#222833] hover:bg-slate-200 dark:hover:bg-[#2A313D] disabled:opacity-40 text-slate-700 dark:text-slate-200 text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
+                    className="px-3 py-2 rounded-lg bg-slate-100 dark:bg-[#312F2C] hover:bg-slate-200 dark:hover:bg-[#3C3A37] disabled:opacity-40 text-slate-700 dark:text-slate-200 text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
                   >
                     <Undo2 className="w-3.5 h-3.5" />
                     Undo & Retry
@@ -637,7 +637,7 @@ export const CoachView: React.FC<CoachViewProps> = ({
                   <button
                     type="button"
                     onClick={() => setCoachOrientation((o) => (o === 'w' ? 'b' : 'w'))}
-                    className="px-3 py-2 rounded-lg bg-slate-100 dark:bg-[#222833] hover:bg-slate-200 dark:hover:bg-[#2A313D] text-slate-700 dark:text-slate-200 text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
+                    className="px-3 py-2 rounded-lg bg-slate-100 dark:bg-[#312F2C] hover:bg-slate-200 dark:hover:bg-[#3C3A37] text-slate-700 dark:text-slate-200 text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
                     Flip
@@ -648,7 +648,7 @@ export const CoachView: React.FC<CoachViewProps> = ({
                   <button
                     type="button"
                     onClick={handleExportCoachPgn}
-                    className="px-3 py-2 rounded-lg bg-slate-100 dark:bg-[#222833] hover:bg-slate-200 dark:hover:bg-[#2A313D] text-slate-700 dark:text-slate-200 text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
+                    className="px-3 py-2 rounded-lg bg-slate-100 dark:bg-[#312F2C] hover:bg-slate-200 dark:hover:bg-[#3C3A37] text-slate-700 dark:text-slate-200 text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
                   >
                     <Download className="w-3.5 h-3.5" />
                     Export PGN
@@ -661,7 +661,7 @@ export const CoachView: React.FC<CoachViewProps> = ({
           {/* Right Coach Feedback & Setup Panel */}
           <div className="xl:col-span-5 space-y-4">
             {/* Coach Live Commentary Card */}
-            <div className="bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl p-5 space-y-3">
+            <div className="bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] rounded-xl p-5 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="font-display text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-emerald-500" />
@@ -681,7 +681,7 @@ export const CoachView: React.FC<CoachViewProps> = ({
                       ? 'bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300'
                       : coachFeedback.classification === 'best'
                       ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-300'
-                      : 'bg-slate-50 dark:bg-[#14181F] border-slate-200 dark:border-[#242A35] text-slate-700 dark:text-slate-200'
+                      : 'bg-slate-50 dark:bg-[#1F1E1B] border-slate-200 dark:border-[#353330] text-slate-700 dark:text-slate-200'
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">
@@ -709,7 +709,7 @@ export const CoachView: React.FC<CoachViewProps> = ({
             </div>
 
             {/* Coach Session Controls */}
-            <div className="bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl p-5 space-y-4">
+            <div className="bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] rounded-xl p-5 space-y-4">
               <h2 className="font-display text-sm font-bold text-slate-900 dark:text-white">
                 Session Setup
               </h2>
@@ -731,7 +731,7 @@ export const CoachView: React.FC<CoachViewProps> = ({
                       className={`p-2.5 rounded-lg border text-center transition-colors cursor-pointer ${
                         coachTier === tier.id
                           ? 'border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
-                          : 'border-slate-200 dark:border-[#2A313D] text-slate-600 dark:text-slate-300'
+                          : 'border-slate-200 dark:border-[#3C3A37] text-slate-600 dark:text-slate-300'
                       }`}
                     >
                       <span className="block text-xs font-bold">{tier.label}</span>
@@ -753,7 +753,7 @@ export const CoachView: React.FC<CoachViewProps> = ({
                         className={`py-2 rounded-lg text-xs font-semibold border cursor-pointer transition-colors ${
                           coachPlayerColor === c
                             ? 'border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
-                            : 'border-slate-200 dark:border-[#2A313D] text-slate-600 dark:text-slate-300'
+                            : 'border-slate-200 dark:border-[#3C3A37] text-slate-600 dark:text-slate-300'
                         }`}
                       >
                         {c === 'w' ? 'White' : 'Black'}
@@ -773,7 +773,7 @@ export const CoachView: React.FC<CoachViewProps> = ({
                         className={`py-2 rounded-lg text-xs font-semibold border cursor-pointer transition-colors ${
                           coachVariant === v
                             ? 'border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
-                            : 'border-slate-200 dark:border-[#2A313D] text-slate-600 dark:text-slate-300'
+                            : 'border-slate-200 dark:border-[#3C3A37] text-slate-600 dark:text-slate-300'
                         }`}
                       >
                         {v === 'standard' ? 'Standard' : 'Chess960'}
@@ -841,7 +841,7 @@ export const CoachView: React.FC<CoachViewProps> = ({
                     type="button"
                     onClick={() => setAnalysisPly(0)}
                     disabled={analysisPly === 0}
-                    className="p-2 rounded-lg bg-slate-100 dark:bg-[#222833] disabled:opacity-40 text-slate-700 dark:text-slate-200 cursor-pointer"
+                    className="p-2 rounded-lg bg-slate-100 dark:bg-[#312F2C] disabled:opacity-40 text-slate-700 dark:text-slate-200 cursor-pointer"
                     aria-label="Start position"
                   >
                     <ChevronsLeft className="w-4 h-4" />
@@ -850,7 +850,7 @@ export const CoachView: React.FC<CoachViewProps> = ({
                     type="button"
                     onClick={() => setAnalysisPly((p) => Math.max(0, p - 1))}
                     disabled={analysisPly === 0}
-                    className="p-2 rounded-lg bg-slate-100 dark:bg-[#222833] disabled:opacity-40 text-slate-700 dark:text-slate-200 cursor-pointer"
+                    className="p-2 rounded-lg bg-slate-100 dark:bg-[#312F2C] disabled:opacity-40 text-slate-700 dark:text-slate-200 cursor-pointer"
                     aria-label="Previous move"
                   >
                     <ChevronLeft className="w-4 h-4" />
@@ -859,7 +859,7 @@ export const CoachView: React.FC<CoachViewProps> = ({
                     type="button"
                     onClick={() => setAnalysisPly((p) => Math.min(analysisMoves.length, p + 1))}
                     disabled={analysisPly >= analysisMoves.length}
-                    className="p-2 rounded-lg bg-slate-100 dark:bg-[#222833] disabled:opacity-40 text-slate-700 dark:text-slate-200 cursor-pointer"
+                    className="p-2 rounded-lg bg-slate-100 dark:bg-[#312F2C] disabled:opacity-40 text-slate-700 dark:text-slate-200 cursor-pointer"
                     aria-label="Next move"
                   >
                     <ChevronRight className="w-4 h-4" />
@@ -868,7 +868,7 @@ export const CoachView: React.FC<CoachViewProps> = ({
                     type="button"
                     onClick={() => setAnalysisPly(analysisMoves.length)}
                     disabled={analysisPly >= analysisMoves.length}
-                    className="p-2 rounded-lg bg-slate-100 dark:bg-[#222833] disabled:opacity-40 text-slate-700 dark:text-slate-200 cursor-pointer"
+                    className="p-2 rounded-lg bg-slate-100 dark:bg-[#312F2C] disabled:opacity-40 text-slate-700 dark:text-slate-200 cursor-pointer"
                     aria-label="Latest position"
                   >
                     <ChevronsRight className="w-4 h-4" />
@@ -879,7 +879,7 @@ export const CoachView: React.FC<CoachViewProps> = ({
                   <button
                     type="button"
                     onClick={() => setAnalysisOrientation((o) => (o === 'w' ? 'b' : 'w'))}
-                    className="px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-[#222833] text-xs font-semibold text-slate-700 dark:text-slate-200 inline-flex items-center gap-1 cursor-pointer"
+                    className="px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-[#312F2C] text-xs font-semibold text-slate-700 dark:text-slate-200 inline-flex items-center gap-1 cursor-pointer"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
                     Flip
@@ -892,7 +892,7 @@ export const CoachView: React.FC<CoachViewProps> = ({
                       setAnalysisMoves([]);
                       setAnalysisPly(0);
                     }}
-                    className="px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-[#222833] text-xs font-semibold text-slate-700 dark:text-slate-200 inline-flex items-center gap-1 cursor-pointer"
+                    className="px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-[#312F2C] text-xs font-semibold text-slate-700 dark:text-slate-200 inline-flex items-center gap-1 cursor-pointer"
                   >
                     <Shuffle className="w-3.5 h-3.5 text-emerald-500" />
                     Chess960
@@ -904,7 +904,7 @@ export const CoachView: React.FC<CoachViewProps> = ({
                       setAnalysisMoves([]);
                       setAnalysisPly(0);
                     }}
-                    className="px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-[#222833] text-xs font-semibold text-slate-700 dark:text-slate-200 cursor-pointer"
+                    className="px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-[#312F2C] text-xs font-semibold text-slate-700 dark:text-slate-200 cursor-pointer"
                   >
                     Reset
                   </button>
@@ -916,7 +916,7 @@ export const CoachView: React.FC<CoachViewProps> = ({
           {/* Right Analysis Lines & FEN/PGN Panel */}
           <div className="xl:col-span-5 space-y-4">
             {/* Coach Top 3 Lines */}
-            <div className="bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl p-5 space-y-3">
+            <div className="bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] rounded-xl p-5 space-y-3">
               <div className="flex items-center justify-between gap-2">
                 <span className="font-display text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                   <GraduationCap className="w-4 h-4 text-emerald-500" />
@@ -948,7 +948,7 @@ export const CoachView: React.FC<CoachViewProps> = ({
                         );
                       }
                     }}
-                    className="w-full text-left px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#14181F] hover:bg-emerald-500/10 border border-slate-200/80 dark:border-[#242A35] flex items-center gap-3 transition-colors cursor-pointer"
+                    className="w-full text-left px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#1F1E1B] hover:bg-emerald-500/10 border border-slate-200/80 dark:border-[#353330] flex items-center gap-3 transition-colors cursor-pointer"
                     title="Click to play Coach's top move"
                   >
                     <span className="font-mono text-xs font-bold text-emerald-600 dark:text-emerald-400 w-12 shrink-0 tabular-nums">
@@ -968,7 +968,7 @@ export const CoachView: React.FC<CoachViewProps> = ({
             </div>
 
             {/* Import / Export FEN & PGN */}
-            <div className="bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl p-5 space-y-3">
+            <div className="bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] rounded-xl p-5 space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="font-display text-sm font-bold text-slate-900 dark:text-white">
                   FEN & PGN Studio
@@ -988,7 +988,7 @@ export const CoachView: React.FC<CoachViewProps> = ({
                 value={importText}
                 onChange={(e) => setImportText(e.target.value)}
                 placeholder="Paste any FEN position or full PGN game here..."
-                className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#12151A] border border-slate-200 dark:border-[#2A313D] text-xs font-mono text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
+                className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#1F1E1B] border border-slate-200 dark:border-[#3C3A37] text-xs font-mono text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
               />
               {importError && <p className="text-xs text-red-500">{importError}</p>}
 
@@ -996,7 +996,7 @@ export const CoachView: React.FC<CoachViewProps> = ({
                 <button
                   type="button"
                   onClick={handleImportFenOrPgn}
-                  className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
+                  className="px-3.5 py-2 rounded-lg btn-chess-primary text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
                 >
                   <Upload className="w-3.5 h-3.5" />
                   Load Position
@@ -1013,7 +1013,7 @@ export const CoachView: React.FC<CoachViewProps> = ({
                     });
                     setActiveTab('play');
                   }}
-                  className="px-3.5 py-2 rounded-lg bg-slate-100 dark:bg-[#222833] hover:bg-slate-200 dark:hover:bg-[#2A313D] text-slate-700 dark:text-slate-200 text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
+                  className="px-3.5 py-2 rounded-lg bg-slate-100 dark:bg-[#312F2C] hover:bg-slate-200 dark:hover:bg-[#3C3A37] text-slate-700 dark:text-slate-200 text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
                 >
                   <Play className="w-3.5 h-3.5" />
                   Play This vs Coach
@@ -1040,7 +1040,7 @@ export const CoachView: React.FC<CoachViewProps> = ({
               animationsEnabled={settings.animationsEnabled}
               showCoordinates={localPrefs.showCoordinates}
             />
-            <div className="bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl p-4 space-y-3">
+            <div className="bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] rounded-xl p-4 space-y-3">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="font-mono text-xs text-emerald-600 dark:text-emerald-400 font-bold">
@@ -1055,7 +1055,7 @@ export const CoachView: React.FC<CoachViewProps> = ({
                     type="button"
                     onClick={() => setOpeningStep((s) => Math.max(0, s - 1))}
                     disabled={openingStep === 0}
-                    className="p-1.5 rounded-lg bg-slate-100 dark:bg-[#222833] disabled:opacity-40 cursor-pointer"
+                    className="p-1.5 rounded-lg bg-slate-100 dark:bg-[#312F2C] disabled:opacity-40 cursor-pointer"
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </button>
@@ -1063,7 +1063,7 @@ export const CoachView: React.FC<CoachViewProps> = ({
                     type="button"
                     onClick={() => setOpeningStep((s) => Math.min(selectedOpening.moves.length, s + 1))}
                     disabled={openingStep >= selectedOpening.moves.length}
-                    className="p-1.5 rounded-lg bg-slate-100 dark:bg-[#222833] disabled:opacity-40 cursor-pointer"
+                    className="p-1.5 rounded-lg bg-slate-100 dark:bg-[#312F2C] disabled:opacity-40 cursor-pointer"
                   >
                     <ChevronRight className="w-4 h-4" />
                   </button>
@@ -1079,7 +1079,7 @@ export const CoachView: React.FC<CoachViewProps> = ({
                 <button
                   type="button"
                   onClick={() => handlePracticeOpeningWithCoach(selectedOpening, 'w')}
-                  className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
+                  className="px-3.5 py-2 rounded-lg btn-chess-primary text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
                 >
                   <Swords className="w-3.5 h-3.5" />
                   Practice as White vs Coach
@@ -1087,7 +1087,7 @@ export const CoachView: React.FC<CoachViewProps> = ({
                 <button
                   type="button"
                   onClick={() => handlePracticeOpeningWithCoach(selectedOpening, 'b')}
-                  className="px-3.5 py-2 rounded-lg bg-slate-100 dark:bg-[#222833] hover:bg-slate-200 dark:hover:bg-[#2A313D] text-slate-800 dark:text-slate-100 text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
+                  className="px-3.5 py-2 rounded-lg bg-slate-100 dark:bg-[#312F2C] hover:bg-slate-200 dark:hover:bg-[#3C3A37] text-slate-800 dark:text-slate-100 text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
                 >
                   Practice as Black vs Coach
                 </button>
@@ -1095,7 +1095,7 @@ export const CoachView: React.FC<CoachViewProps> = ({
             </div>
           </div>
 
-          <div className="xl:col-span-6 bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl p-5 space-y-4">
+          <div className="xl:col-span-6 bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] rounded-xl p-5 space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className="font-display text-base font-bold text-slate-900 dark:text-white">
                 Opening Repertoire ({filteredOpenings.length})
@@ -1109,7 +1109,7 @@ export const CoachView: React.FC<CoachViewProps> = ({
                     className={`px-2.5 py-1 rounded-md text-xs font-semibold cursor-pointer transition-colors ${
                       openingCat === cat
                         ? 'bg-emerald-600 text-white'
-                        : 'bg-slate-100 dark:bg-[#222833] text-slate-600 dark:text-slate-300'
+                        : 'bg-slate-100 dark:bg-[#312F2C] text-slate-600 dark:text-slate-300'
                     }`}
                   >
                     {cat}
@@ -1132,7 +1132,7 @@ export const CoachView: React.FC<CoachViewProps> = ({
                     className={`w-full text-left p-3.5 rounded-xl border transition-colors cursor-pointer ${
                       active
                         ? 'border-emerald-500 bg-emerald-500/8'
-                        : 'border-slate-200 dark:border-[#242A35] hover:border-slate-400 bg-slate-50/70 dark:bg-[#14181F]'
+                        : 'border-slate-200 dark:border-[#353330] hover:border-slate-400 bg-slate-50/70 dark:bg-[#1F1E1B]'
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2">
@@ -1164,7 +1164,7 @@ export const CoachView: React.FC<CoachViewProps> = ({
               className={`px-4 py-2 rounded-lg text-xs font-semibold inline-flex items-center gap-2 cursor-pointer transition-colors ${
                 drillSubTab === 'vision'
                   ? 'bg-emerald-600 text-white'
-                  : 'bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] text-slate-700 dark:text-slate-200'
+                  : 'bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] text-slate-700 dark:text-slate-200'
               }`}
             >
               <Crosshair className="w-3.5 h-3.5" />
@@ -1176,7 +1176,7 @@ export const CoachView: React.FC<CoachViewProps> = ({
               className={`px-4 py-2 rounded-lg text-xs font-semibold inline-flex items-center gap-2 cursor-pointer transition-colors ${
                 drillSubTab === 'endgames'
                   ? 'bg-emerald-600 text-white'
-                  : 'bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] text-slate-700 dark:text-slate-200'
+                  : 'bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] text-slate-700 dark:text-slate-200'
               }`}
             >
               <Flag className="w-3.5 h-3.5" />
@@ -1210,7 +1210,7 @@ export const CoachView: React.FC<CoachViewProps> = ({
                 )}
               </div>
 
-              <div className="xl:col-span-5 bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl p-6 space-y-5">
+              <div className="xl:col-span-5 bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] rounded-xl p-6 space-y-5">
                 <div>
                   <h2 className="font-display text-lg font-bold text-slate-900 dark:text-white">
                     Coordinate Speed Drill
@@ -1221,7 +1221,7 @@ export const CoachView: React.FC<CoachViewProps> = ({
                 </div>
 
                 <div className="grid grid-cols-3 gap-3 text-center">
-                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#14181F] border border-slate-200 dark:border-[#242A35]">
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#1F1E1B] border border-slate-200 dark:border-[#353330]">
                     <p className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-center gap-1">
                       <Timer className="w-3 h-3" /> Time
                     </p>
@@ -1229,13 +1229,13 @@ export const CoachView: React.FC<CoachViewProps> = ({
                       {visionTimeLeft}s
                     </p>
                   </div>
-                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#14181F] border border-slate-200 dark:border-[#242A35]">
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#1F1E1B] border border-slate-200 dark:border-[#353330]">
                     <p className="text-[11px] text-slate-500 dark:text-slate-400">Score</p>
                     <p className="font-mono text-2xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums mt-0.5">
                       {visionScore}
                     </p>
                   </div>
-                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#14181F] border border-slate-200 dark:border-[#242A35]">
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#1F1E1B] border border-slate-200 dark:border-[#353330]">
                     <p className="text-[11px] text-slate-500 dark:text-slate-400">Best</p>
                     <p className="font-mono text-2xl font-bold text-amber-500 tabular-nums mt-0.5">
                       {Math.max(progression?.visionBest ?? 0, visionScore)}
@@ -1254,14 +1254,14 @@ export const CoachView: React.FC<CoachViewProps> = ({
                   <button
                     type="button"
                     onClick={() => setVisionOrientation((o) => (o === 'w' ? 'b' : 'w'))}
-                    className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-[#222833] text-xs font-semibold text-slate-700 dark:text-slate-200 cursor-pointer"
+                    className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-[#312F2C] text-xs font-semibold text-slate-700 dark:text-slate-200 cursor-pointer"
                   >
                     Perspective: {visionOrientation === 'w' ? 'White' : 'Black'}
                   </button>
                   <button
                     type="button"
                     onClick={() => setVisionShowCoords((c) => !c)}
-                    className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-[#222833] text-xs font-semibold text-slate-700 dark:text-slate-200 cursor-pointer"
+                    className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-[#312F2C] text-xs font-semibold text-slate-700 dark:text-slate-200 cursor-pointer"
                   >
                     Coords: {visionShowCoords ? 'Shown' : 'Hidden (Pro)'}
                   </button>
@@ -1270,7 +1270,7 @@ export const CoachView: React.FC<CoachViewProps> = ({
                 <button
                   type="button"
                   onClick={startVisionDrill}
-                  className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm inline-flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full py-3 rounded-xl btn-chess-primary font-semibold text-sm inline-flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <Play className="w-4 h-4 fill-current" />
                   {visionActive ? 'Restart 30s Drill' : 'Start 30s Vision Drill'}
@@ -1282,7 +1282,7 @@ export const CoachView: React.FC<CoachViewProps> = ({
               {ENDGAME_DRILLS.map((drill) => (
                 <div
                   key={drill.id}
-                  className="bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl p-5 flex flex-col justify-between gap-4"
+                  className="bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] rounded-xl p-5 flex flex-col justify-between gap-4"
                 >
                   <div className="space-y-2">
                     <div className="flex items-center justify-between gap-2">
@@ -1304,7 +1304,7 @@ export const CoachView: React.FC<CoachViewProps> = ({
                   <button
                     type="button"
                     onClick={() => launchEndgameDrill(drill)}
-                    className="w-full py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold inline-flex items-center justify-center gap-1.5 cursor-pointer"
+                    className="w-full py-2.5 rounded-lg btn-chess-primary text-xs font-semibold inline-flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     <Swords className="w-3.5 h-3.5" />
                     Practice vs Coach

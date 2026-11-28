@@ -53,7 +53,7 @@ export const GameAnalysisPanel: React.FC<GameAnalysisPanelProps> = ({
 
   if (error) {
     return (
-      <div className="bg-white dark:bg-[#1A1E26] border border-red-500/30 rounded-xl p-5 space-y-3">
+      <div className="bg-white dark:bg-[#262421] border border-red-500/30 rounded-xl p-5 space-y-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-2.5 text-sm text-red-700 dark:text-red-300">
             <XCircle className="w-4 h-4 shrink-0 mt-0.5" />
@@ -62,7 +62,7 @@ export const GameAnalysisPanel: React.FC<GameAnalysisPanelProps> = ({
           <button
             type="button"
             onClick={onRunAnalysis}
-            className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold whitespace-nowrap shrink-0 cursor-pointer"
+            className="px-3 py-1.5 rounded-lg btn-chess-primary text-xs font-semibold whitespace-nowrap shrink-0 cursor-pointer"
           >
             Retry Analysis
           </button>
@@ -75,7 +75,7 @@ export const GameAnalysisPanel: React.FC<GameAnalysisPanelProps> = ({
     const pct =
       progress && progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
     return (
-      <div className="bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl p-5 space-y-3">
+      <div className="bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] rounded-xl p-5 space-y-3">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <Loader2 className="w-4 h-4 animate-spin text-emerald-500 shrink-0" />
@@ -94,7 +94,7 @@ export const GameAnalysisPanel: React.FC<GameAnalysisPanelProps> = ({
             {pct}%
           </span>
         </div>
-        <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-[#12151A] overflow-hidden">
+        <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-[#1F1E1B] overflow-hidden">
           <div
             className="h-full bg-emerald-500 transition-all duration-150"
             style={{ width: `${pct}%` }}
@@ -118,7 +118,7 @@ export const GameAnalysisPanel: React.FC<GameAnalysisPanelProps> = ({
   const activeMove = currentPly > 0 ? analysis.moves[currentPly - 1] : null;
 
   return (
-    <section className="bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl p-5 space-y-5">
+    <section className="bg-white dark:bg-[#262421] border border-slate-200 dark:border-[#3C3A37] rounded-xl p-5 space-y-5">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
@@ -138,7 +138,7 @@ export const GameAnalysisPanel: React.FC<GameAnalysisPanelProps> = ({
         <button
           type="button"
           onClick={onRunAnalysis}
-          className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-[#222833] hover:bg-slate-200 dark:hover:bg-[#2A313D] text-slate-700 dark:text-slate-200 text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
+          className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-[#312F2C] hover:bg-slate-200 dark:hover:bg-[#3C3A37] text-slate-700 dark:text-slate-200 text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
         >
           <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
           Re-analyze
@@ -153,7 +153,7 @@ export const GameAnalysisPanel: React.FC<GameAnalysisPanelProps> = ({
         ].map((item) => (
           <div
             key={item.side}
-            className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#14181F] border border-slate-200/80 dark:border-[#242A35] space-y-2.5"
+            className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#1F1E1B] border border-slate-200/80 dark:border-[#353330] space-y-2.5"
           >
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0">
@@ -173,7 +173,7 @@ export const GameAnalysisPanel: React.FC<GameAnalysisPanelProps> = ({
               </span>
             </div>
 
-            <div className="grid grid-cols-4 gap-2 text-center pt-1 border-t border-slate-200/70 dark:border-[#242A35]">
+            <div className="grid grid-cols-4 gap-2 text-center pt-1 border-t border-slate-200/70 dark:border-[#353330]">
               <div>
                 <span className="block font-mono text-sm font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
                   {item.stats.bestCount}
@@ -217,7 +217,7 @@ export const GameAnalysisPanel: React.FC<GameAnalysisPanelProps> = ({
                 : 'Start (0.0)'}
             </span>
           </div>
-          <div className="rounded-lg bg-slate-100 dark:bg-[#12151A] border border-slate-200 dark:border-[#242A35] p-2">
+          <div className="rounded-lg bg-slate-100 dark:bg-[#1F1E1B] border border-slate-200 dark:border-[#353330] p-2">
             <svg
               viewBox={`0 0 ${evalGraph.width} ${evalGraph.height}`}
               className="w-full h-20 overflow-visible cursor-pointer"
@@ -255,7 +255,7 @@ export const GameAnalysisPanel: React.FC<GameAnalysisPanelProps> = ({
                     cx={pt.x}
                     cy={pt.y}
                     r={3.5}
-                    className="fill-red-500 stroke-white dark:stroke-[#12151A]"
+                    className="fill-red-500 stroke-white dark:stroke-[#1F1E1B]"
                     strokeWidth="1.2"
                   />
                 );
@@ -274,7 +274,7 @@ export const GameAnalysisPanel: React.FC<GameAnalysisPanelProps> = ({
                     cx={evalGraph.activePt.x}
                     cy={evalGraph.activePt.y}
                     r={4}
-                    className="fill-amber-500 stroke-white dark:stroke-[#12151A]"
+                    className="fill-amber-500 stroke-white dark:stroke-[#1F1E1B]"
                     strokeWidth="1.5"
                   />
                 </>
@@ -294,7 +294,7 @@ export const GameAnalysisPanel: React.FC<GameAnalysisPanelProps> = ({
               ? 'bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300'
               : activeMove.classification === 'best'
               ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-300'
-              : 'bg-slate-50 dark:bg-[#14181F] border-slate-200 dark:border-[#242A35] text-slate-700 dark:text-slate-300'
+              : 'bg-slate-50 dark:bg-[#1F1E1B] border-slate-200 dark:border-[#353330] text-slate-700 dark:text-slate-300'
           }`}
         >
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -324,13 +324,13 @@ export const GameAnalysisPanel: React.FC<GameAnalysisPanelProps> = ({
 
       {/* Key Moments Tabs: Blunders & Mistakes / Best Moves / All */}
       <div className="space-y-3">
-        <div className="flex items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-[#12151A]">
+        <div className="flex items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-[#1F1E1B]">
           <button
             type="button"
             onClick={() => setTab('blunders')}
             className={`flex-1 py-1.5 px-2.5 rounded-md text-xs font-semibold inline-flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer transition-colors ${
               tab === 'blunders'
-                ? 'bg-white dark:bg-[#222833] text-slate-900 dark:text-white shadow-sm'
+                ? 'bg-white dark:bg-[#312F2C] text-slate-900 dark:text-white shadow-sm'
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
@@ -342,7 +342,7 @@ export const GameAnalysisPanel: React.FC<GameAnalysisPanelProps> = ({
             onClick={() => setTab('best')}
             className={`flex-1 py-1.5 px-2.5 rounded-md text-xs font-semibold inline-flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer transition-colors ${
               tab === 'best'
-                ? 'bg-white dark:bg-[#222833] text-slate-900 dark:text-white shadow-sm'
+                ? 'bg-white dark:bg-[#312F2C] text-slate-900 dark:text-white shadow-sm'
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
@@ -354,7 +354,7 @@ export const GameAnalysisPanel: React.FC<GameAnalysisPanelProps> = ({
             onClick={() => setTab('all')}
             className={`py-1.5 px-3 rounded-md text-xs font-semibold whitespace-nowrap cursor-pointer transition-colors ${
               tab === 'all'
-                ? 'bg-white dark:bg-[#222833] text-slate-900 dark:text-white shadow-sm'
+                ? 'bg-white dark:bg-[#312F2C] text-slate-900 dark:text-white shadow-sm'
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
@@ -391,7 +391,7 @@ export const GameAnalysisPanel: React.FC<GameAnalysisPanelProps> = ({
                   className={`w-full text-left px-3 py-2 rounded-lg border flex items-center justify-between gap-3 text-xs transition-colors cursor-pointer ${
                     isSelected
                       ? 'bg-emerald-600/12 border-emerald-500/40'
-                      : 'bg-slate-50 dark:bg-[#14181F] border-transparent hover:border-slate-200 dark:hover:border-[#2A313D]'
+                      : 'bg-slate-50 dark:bg-[#1F1E1B] border-transparent hover:border-slate-200 dark:hover:border-[#3C3A37]'
                   }`}
                 >
                   <div className="flex items-center gap-2 min-w-0">

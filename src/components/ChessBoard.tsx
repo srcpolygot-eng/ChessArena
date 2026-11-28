@@ -352,7 +352,7 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
       list.push({
         from: hintSquares.from as Square,
         to: hintSquares.to as Square,
-        color: 'rgba(16, 185, 129, 0.78)',
+        color: 'rgba(129, 182, 76, 0.86)',
       });
     }
     return list;
@@ -367,7 +367,7 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
       }}
     >
       <div
-        className="w-full h-full grid grid-cols-8 grid-rows-8 rounded-lg overflow-hidden ring-1 ring-black/25 dark:ring-white/10 shadow-[0_14px_36px_rgba(0,0,0,0.35)]"
+        className="w-full h-full grid grid-cols-8 grid-rows-8 rounded-[4px] overflow-hidden ring-1 ring-black/30 dark:ring-black/45 shadow-[0_12px_32px_rgba(0,0,0,0.42)]"
         role="grid"
         aria-label="Interactive chessboard"
       >
@@ -394,7 +394,7 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
               squareBg = isLight ? '#F5A5A5' : '#C95B5B';
             }
             if (isSelected) {
-              squareBg = premoveSelected === sq ? '#E06B6B' : '#F4D35E';
+              squareBg = premoveSelected === sq ? '#E06B6B' : isLight ? '#F6F669' : '#BACA2B';
             }
 
             const coordColor = isLight ? theme.coordLight : theme.coordDark;
@@ -412,7 +412,7 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => handleDrop(e, sq)}
                 style={{ backgroundColor: squareBg }}
-                className="relative flex items-center justify-center w-full h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-400 cursor-pointer"
+                className="relative flex items-center justify-center w-full h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#81B64C] cursor-pointer"
                 aria-label={`${sq}${piece ? ` ${piece.color === 'w' ? 'white' : 'black'} ${piece.type}` : ''}`}
               >
                 {/* Right-click User Square Highlight */}
@@ -429,31 +429,31 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
                     className="absolute inset-0 pointer-events-none"
                     style={{
                       background:
-                        'radial-gradient(circle, rgba(220,38,38,0.9) 0%, rgba(220,38,38,0.52) 55%, rgba(220,38,38,0) 80%)',
+                        'radial-gradient(circle, rgba(220,38,38,0.92) 0%, rgba(220,38,38,0.52) 55%, rgba(220,38,38,0) 80%)',
                     }}
                   />
                 )}
 
                 {/* Hint Outline */}
                 {isHint && (
-                  <div className="absolute inset-1 rounded-md ring-3 ring-emerald-400 bg-emerald-400/18 pointer-events-none" />
+                  <div className="absolute inset-1 rounded-[3px] ring-3 ring-[#81B64C] bg-[#81B64C]/22 pointer-events-none" />
                 )}
 
-                {/* Rank Coordinate (left edge) */}
+                {/* Rank Coordinate (top-left edge, Chess.com style) */}
                 {showCoordinates && fIdx === 0 && (
                   <span
                     style={{ color: coordColor }}
-                    className="absolute top-0.5 left-1 text-[10px] sm:text-[11px] font-mono font-semibold leading-none pointer-events-none"
+                    className="absolute top-1 left-1 text-[10px] sm:text-[11px] font-display font-extrabold leading-none pointer-events-none"
                   >
                     {rank}
                   </span>
                 )}
 
-                {/* File Coordinate (bottom edge) */}
+                {/* File Coordinate (bottom-right edge, Chess.com style) */}
                 {showCoordinates && rIdx === 7 && (
                   <span
                     style={{ color: coordColor }}
-                    className="absolute bottom-0.5 right-1 text-[10px] sm:text-[11px] font-mono font-semibold leading-none pointer-events-none"
+                    className="absolute bottom-1 right-1 text-[10px] sm:text-[11px] font-display font-extrabold leading-none pointer-events-none"
                   >
                     {file}
                   </span>
@@ -461,12 +461,12 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
 
                 {/* Legal Empty Square Dot */}
                 {legalMove && !isCaptureTarget && (
-                  <span className="w-[30%] h-[30%] rounded-full bg-black/22 pointer-events-none" />
+                  <span className="w-[31%] h-[31%] rounded-full bg-black/18 pointer-events-none" />
                 )}
 
                 {/* Legal Capture Ring */}
                 {legalMove && isCaptureTarget && (
-                  <span className="absolute inset-[6%] rounded-full border-[5px] sm:border-[6px] border-black/25 pointer-events-none" />
+                  <span className="absolute inset-[5%] rounded-full border-[5px] sm:border-[6px] border-black/20 pointer-events-none" />
                 )}
 
                 {/* Chess Piece */}
@@ -475,10 +475,10 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
                     key={`${sq}-${piece.color}${piece.type}`}
                     draggable={canDrag}
                     onDragStart={(e) => handleDragStart(e as unknown as React.DragEvent, sq)}
-                    initial={animationsEnabled ? { scale: 0.93, opacity: 0.88 } : false}
-                    animate={{ scale: isSelected ? 1.07 : 1, opacity: 1 }}
-                    transition={{ duration: animationsEnabled ? 0.09 : 0, ease: [0.16, 1, 0.3, 1] }}
-                    className={`w-[86%] h-[86%] z-10 flex items-center justify-center ${
+                    initial={animationsEnabled ? { scale: 0.94, opacity: 0.9 } : false}
+                    animate={{ scale: isSelected ? 1.06 : 1, opacity: 1 }}
+                    transition={{ duration: animationsEnabled ? 0.08 : 0, ease: [0.16, 1, 0.3, 1] }}
+                    className={`w-[87%] h-[87%] z-10 flex items-center justify-center ${
                       canDrag ? 'cursor-grab active:cursor-grabbing' : ''
                     }`}
                   >
@@ -489,7 +489,7 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
                 {/* End-of-game King Result Badge */}
                 {kingBadge && (
                   <span
-                    className={`absolute -top-0.5 -right-0.5 z-20 w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-[11px] font-bold shadow-md ring-2 ring-white dark:ring-[#12151A] pointer-events-none ${kingBadge.bg}`}
+                    className={`absolute -top-0.5 -right-0.5 z-20 w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-[11px] font-bold shadow-md ring-2 ring-white dark:ring-[#262421] pointer-events-none ${kingBadge.bg}`}
                   >
                     {kingBadge.text}
                   </span>
@@ -516,7 +516,6 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
             const ux = dx / len;
             const uy = dy / len;
 
-            // Trim start slightly from square center & stop shaft before arrowhead
             const startX = p1.x + ux * 16;
             const startY = p1.y + uy * 16;
             const tipX = p2.x - ux * 12;
@@ -560,20 +559,20 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.12 }}
-            className="absolute inset-0 z-30 bg-black/60 backdrop-blur-[2px] rounded-lg flex items-center justify-center p-4"
+            className="absolute inset-0 z-30 bg-black/60 backdrop-blur-[2px] rounded-[4px] flex items-center justify-center p-4"
           >
             <motion.div
               initial={{ scale: 0.94, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.94, opacity: 0 }}
               transition={{ duration: 0.14 }}
-              className="bg-white dark:bg-[#1A1E26] border border-slate-200 dark:border-[#2A313D] rounded-xl p-5 shadow-2xl max-w-xs w-full text-center"
+              className="bg-white dark:bg-[#262421] border border-[#DFDDD8] dark:border-[#3C3A37] rounded-xl p-5 shadow-2xl max-w-xs w-full text-center"
             >
-              <h3 className="font-display text-base font-bold text-slate-900 dark:text-slate-100 mb-1">
+              <h3 className="font-display text-base font-bold text-slate-900 dark:text-white mb-1">
                 Promote Pawn
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-                Choose the piece to promote to on {pendingPromotion.to}.
+              <p className="text-xs text-stone-500 dark:text-[#9E9C98] mb-4">
+                Choose promotion piece on {pendingPromotion.to}.
               </p>
               <div className="grid grid-cols-4 gap-2 mb-3">
                 {(['q', 'r', 'b', 'n'] as PieceSymbol[]).map((pType) => (
@@ -581,7 +580,7 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
                     key={pType}
                     type="button"
                     onClick={() => handlePromotionChoice(pType)}
-                    className="aspect-square p-2 rounded-lg bg-slate-100 dark:bg-[#222833] hover:bg-emerald-500/20 border border-slate-200 dark:border-[#2A313D] hover:border-emerald-500 transition-colors flex flex-col items-center justify-center cursor-pointer"
+                    className="aspect-square p-2 rounded-lg bg-stone-100 dark:bg-[#312F2C] hover:bg-[#81B64C]/20 border border-[#DFDDD8] dark:border-[#3C3A37] hover:border-[#81B64C] transition-colors flex flex-col items-center justify-center cursor-pointer"
                     title={pType === 'q' ? 'Queen' : pType === 'r' ? 'Rook' : pType === 'b' ? 'Bishop' : 'Knight'}
                   >
                     <ChessPieceSvg type={pType} color={pendingPromotion.color} style={pieceStyle} className="w-10 h-10" />
@@ -591,7 +590,7 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
               <button
                 type="button"
                 onClick={() => setPendingPromotion(null)}
-                className="text-xs font-medium text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                className="text-xs font-semibold text-stone-500 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
               >
                 Cancel
               </button>

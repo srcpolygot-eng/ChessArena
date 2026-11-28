@@ -5,6 +5,7 @@ import {
   BOT_GRANDMASTER_IMAGE,
   BOT_NOVICE_IMAGE,
   BOT_TACTICIAN_IMAGE,
+  BOT_ULTRA_IMAGE,
   type ComputerBot,
   type MatchResult,
   type ResultReason,
@@ -16,6 +17,10 @@ export const MINIMAX_H1_FLASH: ComputerBot = {
   name: 'MiniMax H1 Flash',
   username: 'MiniMax_H1_Flash',
   rating: 2050,
+  titleTag: 'FM',
+  badge: 'Fast Tier · H1',
+  styleLabel: 'Lightning Tactical Blitz',
+  greeting: 'Ready when you are — I calculate fast and strike on open diagonals!',
   tagline:
     'Fast tier-one H1 engine with transposition cache, killer-move ordering, quiescence tactics, and tapered positional play.',
   avatar: BOT_FLASH_IMAGE,
@@ -31,6 +36,10 @@ export const MINIMAX_H1_PRO: ComputerBot = {
   name: 'MiniMax H1 Pro',
   username: 'MiniMax_H1_Pro',
   rating: 2350,
+  titleTag: 'IM',
+  badge: 'Pro Tier · H1',
+  styleLabel: 'Positional & PVS Precision',
+  greeting: 'Solid pawn structure and deep Principal Variation search. Show me your best plan.',
   tagline:
     'Stronger H1 Pro engine powered by Principal Variation Search, Late Move Reductions, check extensions, history heuristics, and deep endgame precision.',
   avatar: BOT_TACTICIAN_IMAGE,
@@ -40,7 +49,30 @@ export const MINIMAX_H1_PRO: ComputerBot = {
   timeBudgetMs: 520,
 };
 
-export const COMPUTER_BOTS: ComputerBot[] = [MINIMAX_H1_FLASH, MINIMAX_H1_PRO];
+export const MINIMAX_H1_ULTRA: ComputerBot = {
+  id: 'computer_minimax_h1_ultra',
+  difficulty: 'ultra',
+  name: 'MiniMax H1 Ultra',
+  username: 'MiniMax_H1_Ultra',
+  rating: 2650,
+  titleTag: 'GM',
+  badge: 'Ultra Flagship · H1',
+  styleLabel: 'Apex Calculation · Ruthless Endgame',
+  greeting: 'Every square has a price. I see nine moves ahead — make yours count.',
+  tagline:
+    'Maximum-strength H1 flagship engineered with Aspiration Windows, Null-Move Pruning, Countermove & History Malus heuristics, SEE Quiescence, and super-grandmaster endgame mastery.',
+  avatar: BOT_ULTRA_IMAGE,
+  depth: 9,
+  blunderChance: 0,
+  responseDelayMs: 45,
+  timeBudgetMs: 1100,
+};
+
+export const COMPUTER_BOTS: ComputerBot[] = [
+  MINIMAX_H1_FLASH,
+  MINIMAX_H1_PRO,
+  MINIMAX_H1_ULTRA,
+];
 
 export interface UpcomingBotModel {
   id: string;
@@ -51,16 +83,7 @@ export interface UpcomingBotModel {
   avatar: string;
 }
 
-export const UPCOMING_H1_MODELS: UpcomingBotModel[] = [
-  {
-    id: 'upcoming_minimax_h1_ultra',
-    name: 'MiniMax H1 Ultra',
-    generation: 'H1',
-    tier: 'Hardest H1 Model · Upcoming',
-    tagline: 'Maximum-strength H1 engine with deep calculation and ruthless endgame precision.',
-    avatar: BOT_GRANDMASTER_IMAGE,
-  },
-];
+export const UPCOMING_H1_MODELS: UpcomingBotModel[] = [];
 
 export const UPCOMING_H2_MODELS: UpcomingBotModel[] = [
   {
@@ -393,45 +416,65 @@ const KING_ENDGAME_PST = [
 
 const PASSED_PAWN_BONUS = [0, 10, 18, 30, 52, 85, 130, 0];
 
-// Expanded classical opening book keyed by FEN board + side-to-move
+// Expanded classical & grandmaster opening book keyed by FEN board + side-to-move
+// First candidate in each list is the sharpest GM mainline preferred by MiniMax H1 Ultra
 const OPENING_BOOK: Record<string, string[]> = {
-  'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w': ['e2e4', 'd2d4', 'g1f3', 'c2c4'],
-  'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b': ['e7e5', 'c7c5', 'e7e6', 'c7c6'],
-  'rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b': ['d7d5', 'g8f6', 'e7e6'],
+  'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w': ['e2e4', 'd2d4', 'c2c4', 'g1f3'],
+  'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b': ['c7c5', 'e7e5', 'e7e6', 'c7c6'],
+  'rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b': ['g8f6', 'd7d5', 'e7e6'],
   'rnbqkbnr/pppppppp/8/8/2P5/8/PP1PPPPP/RNBQKBNR b': ['e7e5', 'g8f6', 'c7c5'],
   'rnbqkbnr/pppppppp/8/8/8/5N2/PPPPPPPP/RNBQKB1R b': ['d7d5', 'g8f6', 'c7c5'],
+  // Open Games: Ruy Lopez & Italian
   'rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w': ['g1f3', 'f1c4', 'b1c3'],
   'rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b': ['b8c6', 'g8f6'],
   'r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w': ['f1b5', 'f1c4', 'd2d4'],
   'r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b': ['a7a6', 'g8f6'],
   'r1bqkbnr/1ppp1ppp/p1n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w': ['b5a4', 'b5c6'],
   'r1bqkbnr/1ppp1ppp/p1n5/4p3/B3P3/5N2/PPPP1PPP/RNBQK2R b': ['g8f6', 'f8e7'],
+  'r1bqkb1r/1ppp1ppp/p1n2n2/4p3/B3P3/5N2/PPPP1PPP/RNBQK2R w': ['e1g1', 'd2d3'],
+  'r1bqkb1r/1ppp1ppp/p1n2n2/4p3/B3P3/5N2/PPPP1PPP/RNBQ1RK1 b': ['f8e7', 'b7b5'],
+  'r1bqk2r/1pppbppp/p1n2n2/4p3/B3P3/5N2/PPPP1PPP/RNBQ1RK1 w': ['f1e1', 'c2c3'],
   'r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b': ['f8c5', 'g8f6'],
   'r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w': ['c2c3', 'd2d3', 'e1g1'],
   'r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w': ['d2d3', 'b1c3', 'e1g1'],
+  // Sicilian Najdorf, Sveshnikov & Classical
   'rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w': ['g1f3', 'b1c3', 'c2c3'],
   'rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b': ['d7d6', 'b8c6', 'e7e6'],
   'rnbqkbnr/pp2pppp/3p4/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R w': ['d2d4', 'f1b5'],
   'rnbqkbnr/pp2pppp/3p4/8/3pP3/5N2/PPP2PPP/RNBQKB1R w': ['f3d4'],
   'rnbqkbnr/pp2pppp/3p4/8/3NP3/8/PPP2PPP/RNBQKB1R b': ['g8f6'],
   'rnbqkb1r/pp2pppp/3p1n2/8/3NP3/8/PPP2PPP/RNBQKB1R w': ['b1c3'],
+  'rnbqkb1r/pp2pppp/3p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R b': ['a7a6', 'e7e5', 'b8c6'],
+  'rnbqkb1r/1p2pppp/p2p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R w': ['c1e3', 'c1g5', 'f1e2'],
+  'r1bqkbnr/pp1ppppp/2n5/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R w': ['d2d4', 'f1b5'],
+  // Queen's Gambit, Catalan, Nimzo-Indian & King's Indian
   'rnbqkbnr/ppp1pppp/8/3p4/3P4/8/PPP1PPPP/RNBQKBNR w': ['c2c4', 'g1f3', 'c1f4'],
-  'rnbqkbnr/ppp1pppp/8/3p4/2PP4/8/PP2PPPP/RNBQKBNR b': ['e7e6', 'c7c6', 'g8f6'],
+  'rnbqkbnr/ppp1pppp/8/3p4/2PP4/8/PP2PPPP/RNBQKBNR b': ['e7e6', 'c7c6', 'd5c4'],
   'rnbqkbnr/ppp2ppp/4p3/3p4/2PP4/8/PP2PPPP/RNBQKBNR w': ['b1c3', 'g1f3'],
+  'rnbqkbnr/ppp2ppp/4p3/3p4/2PP4/2N5/PP2PPPP/R1BQKBNR b': ['g8f6', 'f8e7'],
+  'rnbqkb1r/ppp2ppp/4pn2/3p4/2PP4/2N5/PP2PPPP/R1BQKBNR w': ['c4d5', 'c1g5', 'g1f3'],
   'rnbqkbnr/pp2pppp/2p5/3p4/2PP4/8/PP2PPPP/RNBQKBNR w': ['g1f3', 'b1c3'],
   'rnbqkb1r/pppppppp/5n2/8/3P4/8/PPP1PPPP/RNBQKBNR w': ['c2c4', 'g1f3', 'c1f4'],
   'rnbqkb1r/pppppppp/5n2/8/2PP4/8/PP2PPPP/RNBQKBNR b': ['e7e6', 'g7g6', 'c7c5'],
+  'rnbqkb1r/pppp1ppp/4pn2/8/2PP4/8/PP2PPPP/RNBQKBNR w': ['b1c3', 'g1f3', 'g2g3'],
+  'rnbqkb1r/pppp1ppp/4pn2/8/2PP4/2N5/PP2PPPP/R1BQKBNR b': ['f8b4', 'd7d5'],
+  'rnbqk2r/pppp1ppp/4pn2/8/1bPP4/2N5/PP2PPPP/R1BQKBNR w': ['e2e3', 'd1c2', 'g1f3'],
   'rnbqkb1r/pppppp1p/5np1/8/2PP4/8/PP2PPPP/RNBQKBNR w': ['b1c3', 'g1f3'],
   'rnbqkb1r/pppppp1p/5np1/8/2PP4/2N5/PP2PPPP/R1BQKBNR b': ['f8g7', 'd7d5'],
+  'rnbqk2r/ppppppbp/5np1/8/2PP4/2N5/PP2PPPP/R1BQKBNR w': ['e2e4', 'g1f3'],
+  'rnbqk2r/ppppppbp/5np1/8/2PPP3/2N5/PP3PPP/R1BQKBNR b': ['d7d6', 'e8g8'],
+  // French, Caro-Kann & Scandinavian
   'rnbqkbnr/pppp1ppp/4p3/8/4P3/8/PPPP1PPP/RNBQKBNR w': ['d2d4', 'g1f3'],
   'rnbqkbnr/ppp2ppp/4p3/3p4/3PP3/8/PPP2PPP/RNBQKBNR w': ['b1c3', 'b1d2', 'e4e5'],
+  'rnbqkbnr/ppp2ppp/4p3/3p4/3PP3/2N5/PPP2PPP/R1BQKBNR b': ['g8f6', 'f8b4'],
   'rnbqkbnr/pp1ppppp/2p5/8/4P3/8/PPPP1PPP/RNBQKBNR w': ['d2d4', 'b1c3'],
   'rnbqkbnr/pp2pppp/2p5/3p4/3PP3/8/PPP2PPP/RNBQKBNR w': ['b1c3', 'e4e5', 'e4d5'],
+  'rnbqkbnr/pp2pppp/2p5/3p4/3PP3/2N5/PPP2PPP/R1BQKBNR b': ['d5e4'],
   'rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w': ['e4d5'],
   'rnbqkbnr/ppp1pppp/8/3P4/8/8/PPPP1PPP/RNBQKBNR b': ['d8d5', 'g8f6'],
 };
 
-function lookupOpeningBook(chess: Chess): Move | null {
+function lookupOpeningBook(chess: Chess, ultraMode = false): Move | null {
   const parts = chess.fen().split(' ');
   const key = `${parts[0]} ${parts[1]}`;
   const candidates = OPENING_BOOK[key];
@@ -443,6 +486,11 @@ function lookupOpeningBook(chess: Chess): Move | null {
     .filter((m): m is Move => Boolean(m));
 
   if (legalMatches.length === 0) return null;
+  if (ultraMode) {
+    // Ultra strongly prefers top-tier theoretical mainlines (index 0 or 1)
+    const topPool = legalMatches.slice(0, Math.min(2, legalMatches.length));
+    return Math.random() < 0.75 ? topPool[0] : topPool[topPool.length - 1];
+  }
   return legalMatches[Math.floor(Math.random() * legalMatches.length)];
 }
 
@@ -474,16 +522,19 @@ function getPstValue(
 
 /**
  * Rich, O(64) tapered positional evaluation from White's perspective (in centipawns).
- * When `proMode` is true, adds knight outposts, connected rooks, king-safety tropism,
- * central development penalties for unmoved minor pieces, and endgame mop-up king drive.
+ * - `proMode`: knight outposts, connected rooks, king-safety tropism, endgame mop-up.
+ * - `ultraMode`: adds center/space control, fianchetto bishops, rooks behind passed pawns,
+ *   protected passed pawns, king escort in endgames, development tempo, and open-file king danger.
  */
-function evaluateBoard(chess: Chess, proMode = false): number {
+function evaluateBoard(chess: Chess, proMode = false, ultraMode = false): number {
   const board = chess.board();
   let nonPawnMaterial = 0;
   let whiteMaterial = 0;
   let blackMaterial = 0;
   let whiteBishops = 0;
   let blackBishops = 0;
+  let whiteQueens = 0;
+  let blackQueens = 0;
 
   const whitePawnsByFile = [0, 0, 0, 0, 0, 0, 0, 0];
   const blackPawnsByFile = [0, 0, 0, 0, 0, 0, 0, 0];
@@ -491,6 +542,8 @@ function evaluateBoard(chess: Chess, proMode = false): number {
   const blackPawnMaxRow = [-1, -1, -1, -1, -1, -1, -1, -1];
   const whiteRookPositions: [number, number][] = [];
   const blackRookPositions: [number, number][] = [];
+  const whitePassedPawns: [number, number][] = [];
+  const blackPassedPawns: [number, number][] = [];
 
   let whiteKingRow = 7;
   let whiteKingCol = 4;
@@ -526,10 +579,12 @@ function evaluateBoard(chess: Chess, proMode = false): number {
           whiteMaterial += pv;
           if (piece.type === 'b') whiteBishops++;
           else if (piece.type === 'r') whiteRookPositions.push([r, c]);
+          else if (piece.type === 'q') whiteQueens++;
         } else {
           blackMaterial += pv;
           if (piece.type === 'b') blackBishops++;
           else if (piece.type === 'r') blackRookPositions.push([r, c]);
+          else if (piece.type === 'q') blackQueens++;
         }
       }
     }
@@ -548,6 +603,11 @@ function evaluateBoard(chess: Chess, proMode = false): number {
 
       if (piece.type === 'p') {
         if (piece.color === 'w') {
+          const supportedLeft =
+            r < 6 && c > 0 && board[r + 1][c - 1]?.type === 'p' && board[r + 1][c - 1]?.color === 'w';
+          const supportedRight =
+            r < 6 && c < 7 && board[r + 1][c + 1]?.type === 'p' && board[r + 1][c + 1]?.color === 'w';
+
           let blocked = false;
           for (let f = Math.max(0, c - 1); f <= Math.min(7, c + 1); f++) {
             if (blackPawnsByFile[f] > 0 && blackPawnMaxRow[f] > -1) {
@@ -564,14 +624,23 @@ function evaluateBoard(chess: Chess, proMode = false): number {
           if (!blocked) {
             const rankFromStart = 7 - r;
             val += Math.round(PASSED_PAWN_BONUS[rankFromStart] * (0.65 + 0.65 * endgameWeight));
+            if (ultraMode) {
+              whitePassedPawns.push([r, c]);
+              if (supportedLeft || supportedRight) val += 12 + rankFromStart * 4;
+            }
           }
-          if (proMode && r < 6) {
-            // Connected pawn chain bonus
-            const supportedLeft = c > 0 && board[r + 1][c - 1]?.type === 'p' && board[r + 1][c - 1]?.color === 'w';
-            const supportedRight = c < 7 && board[r + 1][c + 1]?.type === 'p' && board[r + 1][c + 1]?.color === 'w';
-            if (supportedLeft || supportedRight) val += 10;
+          if (proMode && (supportedLeft || supportedRight)) {
+            val += 10;
+          }
+          if (ultraMode && (r === 3 || r === 4) && (c === 3 || c === 4)) {
+            val += 12; // Classical central duo control
           }
         } else {
+          const supportedLeft =
+            r > 1 && c > 0 && board[r - 1][c - 1]?.type === 'p' && board[r - 1][c - 1]?.color === 'b';
+          const supportedRight =
+            r > 1 && c < 7 && board[r - 1][c + 1]?.type === 'p' && board[r - 1][c + 1]?.color === 'b';
+
           let blocked = false;
           for (let f = Math.max(0, c - 1); f <= Math.min(7, c + 1); f++) {
             if (whitePawnsByFile[f] > 0) {
@@ -588,40 +657,74 @@ function evaluateBoard(chess: Chess, proMode = false): number {
           if (!blocked) {
             const rankFromStart = r;
             val += Math.round(PASSED_PAWN_BONUS[rankFromStart] * (0.65 + 0.65 * endgameWeight));
+            if (ultraMode) {
+              blackPassedPawns.push([r, c]);
+              if (supportedLeft || supportedRight) val += 12 + rankFromStart * 4;
+            }
           }
-          if (proMode && r > 1) {
-            const supportedLeft = c > 0 && board[r - 1][c - 1]?.type === 'p' && board[r - 1][c - 1]?.color === 'b';
-            const supportedRight = c < 7 && board[r - 1][c + 1]?.type === 'p' && board[r - 1][c + 1]?.color === 'b';
-            if (supportedLeft || supportedRight) val += 10;
+          if (proMode && (supportedLeft || supportedRight)) {
+            val += 10;
+          }
+          if (ultraMode && (r === 3 || r === 4) && (c === 3 || c === 4)) {
+            val += 12;
           }
         }
       } else if (piece.type === 'r') {
         const ownPawns = piece.color === 'w' ? whitePawnsByFile[c] : blackPawnsByFile[c];
         const oppPawns = piece.color === 'w' ? blackPawnsByFile[c] : whitePawnsByFile[c];
-        if (ownPawns === 0 && oppPawns === 0) val += proMode ? 28 : 22;
-        else if (ownPawns === 0) val += proMode ? 15 : 12;
+        if (ownPawns === 0 && oppPawns === 0) val += ultraMode ? 32 : proMode ? 28 : 22;
+        else if (ownPawns === 0) val += ultraMode ? 18 : proMode ? 15 : 12;
 
         if ((piece.color === 'w' && r === 1) || (piece.color === 'b' && r === 6)) {
-          val += proMode ? 30 : 24;
+          val += ultraMode ? 34 : proMode ? 30 : 24;
         }
       } else if (proMode && piece.type === 'n') {
-        // Outpost bonus: knight on 4th-6th rank supported by friendly pawn
+        // Outpost bonus: knight on 4th-6th rank supported by friendly pawn (& unassailable in Ultra)
         if (piece.color === 'w' && r >= 2 && r <= 4 && c >= 2 && c <= 5) {
           const leftP = c > 0 && board[r + 1][c - 1]?.type === 'p' && board[r + 1][c - 1]?.color === 'w';
           const rightP = c < 7 && board[r + 1][c + 1]?.type === 'p' && board[r + 1][c + 1]?.color === 'w';
-          if (leftP || rightP) val += 22;
+          if (leftP || rightP) {
+            val += 22;
+            if (ultraMode) {
+              const enemyCanChase =
+                (c > 0 && blackPawnsByFile[c - 1] > 0 && blackPawnMaxRow[c - 1] < r) ||
+                (c < 7 && blackPawnsByFile[c + 1] > 0 && blackPawnMaxRow[c + 1] < r);
+              if (!enemyCanChase) val += 14;
+            }
+          }
         } else if (piece.color === 'b' && r >= 3 && r <= 5 && c >= 2 && c <= 5) {
           const leftP = c > 0 && board[r - 1][c - 1]?.type === 'p' && board[r - 1][c - 1]?.color === 'b';
           const rightP = c < 7 && board[r - 1][c + 1]?.type === 'p' && board[r - 1][c + 1]?.color === 'b';
-          if (leftP || rightP) val += 22;
+          if (leftP || rightP) {
+            val += 22;
+            if (ultraMode) {
+              const enemyCanChase =
+                (c > 0 && whitePawnsByFile[c - 1] > 0 && whitePawnMinRow[c - 1] > r) ||
+                (c < 7 && whitePawnsByFile[c + 1] > 0 && whitePawnMinRow[c + 1] > r);
+              if (!enemyCanChase) val += 14;
+            }
+          }
+        }
+        if (ultraMode && endgameWeight < 0.55) {
+          if ((piece.color === 'w' && r === 7) || (piece.color === 'b' && r === 0)) {
+            val -= 12; // Encourage rapid minor piece development
+          }
         }
       } else if (proMode && (piece.type === 'q' || piece.type === 'b')) {
-        // Subtle king tropism in middlegame
+        // King tropism in middlegame
         if (endgameWeight < 0.65) {
           const oppKR = piece.color === 'w' ? blackKingRow : whiteKingRow;
           const oppKC = piece.color === 'w' ? blackKingCol : whiteKingCol;
           const dist = Math.abs(r - oppKR) + Math.abs(c - oppKC);
-          val += Math.round((14 - dist) * (piece.type === 'q' ? 2.2 : 1.1) * (1 - endgameWeight));
+          val += Math.round((14 - dist) * (piece.type === 'q' ? 2.4 : 1.2) * (1 - endgameWeight));
+        }
+        if (ultraMode && piece.type === 'b') {
+          // Fianchetto long-diagonal bonus
+          if (piece.color === 'w' && r === 6 && (c === 1 || c === 6)) val += 16;
+          else if (piece.color === 'b' && r === 1 && (c === 1 || c === 6)) val += 16;
+          if (endgameWeight < 0.55 && ((piece.color === 'w' && r === 7) || (piece.color === 'b' && r === 0))) {
+            val -= 10;
+          }
         }
       }
 
@@ -631,26 +734,26 @@ function evaluateBoard(chess: Chess, proMode = false): number {
 
   // Doubled & isolated pawn structure penalties
   for (let f = 0; f < 8; f++) {
-    if (whitePawnsByFile[f] > 1) score -= (whitePawnsByFile[f] - 1) * 16;
-    if (blackPawnsByFile[f] > 1) score += (blackPawnsByFile[f] - 1) * 16;
+    if (whitePawnsByFile[f] > 1) score -= (whitePawnsByFile[f] - 1) * (ultraMode ? 18 : 16);
+    if (blackPawnsByFile[f] > 1) score += (blackPawnsByFile[f] - 1) * (ultraMode ? 18 : 16);
 
     if (whitePawnsByFile[f] > 0) {
       const left = f > 0 ? whitePawnsByFile[f - 1] : 0;
       const right = f < 7 ? whitePawnsByFile[f + 1] : 0;
-      if (left === 0 && right === 0) score -= 14;
+      if (left === 0 && right === 0) score -= ultraMode ? 16 : 14;
     }
     if (blackPawnsByFile[f] > 0) {
       const left = f > 0 ? blackPawnsByFile[f - 1] : 0;
       const right = f < 7 ? blackPawnsByFile[f + 1] : 0;
-      if (left === 0 && right === 0) score += 14;
+      if (left === 0 && right === 0) score += ultraMode ? 16 : 14;
     }
   }
 
   // Bishop pair bonus
-  if (whiteBishops >= 2) score += proMode ? 42 : 35;
-  if (blackBishops >= 2) score -= proMode ? 42 : 35;
+  if (whiteBishops >= 2) score += ultraMode ? 48 : proMode ? 42 : 35;
+  if (blackBishops >= 2) score -= ultraMode ? 48 : proMode ? 42 : 35;
 
-  // Connected rooks bonus in Pro mode
+  // Connected rooks & endgame mop-up
   if (proMode) {
     if (whiteRookPositions.length === 2) {
       const [[r1, c1], [r2, c2]] = whiteRookPositions;
@@ -661,22 +764,45 @@ function evaluateBoard(chess: Chess, proMode = false): number {
       if (r1 === r2 || c1 === c2) score -= 18;
     }
 
-    // Endgame mop-up evaluation: drive losing king to corner & bring winning king closer
-    if (endgameWeight > 0.65) {
+    if (endgameWeight > 0.6) {
       const matDiff = whiteMaterial - blackMaterial;
-      if (matDiff >= 300) {
+      if (matDiff >= 250) {
         const blackCenterDist = Math.abs(3.5 - blackKingRow) + Math.abs(3.5 - blackKingCol);
         const kingDist = Math.abs(whiteKingRow - blackKingRow) + Math.abs(whiteKingCol - blackKingCol);
-        score += Math.round((blackCenterDist * 14 + (14 - kingDist) * 7) * endgameWeight);
-      } else if (matDiff <= -300) {
+        score += Math.round((blackCenterDist * 16 + (14 - kingDist) * 8) * endgameWeight);
+      } else if (matDiff <= -250) {
         const whiteCenterDist = Math.abs(3.5 - whiteKingRow) + Math.abs(3.5 - whiteKingCol);
         const kingDist = Math.abs(whiteKingRow - blackKingRow) + Math.abs(whiteKingCol - blackKingCol);
-        score -= Math.round((whiteCenterDist * 14 + (14 - kingDist) * 7) * endgameWeight);
+        score -= Math.round((whiteCenterDist * 16 + (14 - kingDist) * 8) * endgameWeight);
       }
     }
   }
 
-  // Midgame king pawn shield bonus
+  // Ultra-exclusive: Rooks behind passed pawns & Endgame King Escort
+  if (ultraMode) {
+    for (const [pr, pc] of whitePassedPawns) {
+      for (const [rr, rc] of whiteRookPositions) {
+        if (rc === pc && rr > pr) score += 24;
+      }
+      if (endgameWeight > 0.45) {
+        const ownKingDist = Math.max(Math.abs(whiteKingRow - pr), Math.abs(whiteKingCol - pc));
+        const oppKingDist = Math.max(Math.abs(blackKingRow - pr), Math.abs(blackKingCol - pc));
+        score += Math.round((oppKingDist * 7 - ownKingDist * 5) * endgameWeight);
+      }
+    }
+    for (const [pr, pc] of blackPassedPawns) {
+      for (const [rr, rc] of blackRookPositions) {
+        if (rc === pc && rr < pr) score -= 24;
+      }
+      if (endgameWeight > 0.45) {
+        const ownKingDist = Math.max(Math.abs(blackKingRow - pr), Math.abs(blackKingCol - pc));
+        const oppKingDist = Math.max(Math.abs(whiteKingRow - pr), Math.abs(whiteKingCol - pc));
+        score -= Math.round((oppKingDist * 7 - ownKingDist * 5) * endgameWeight);
+      }
+    }
+  }
+
+  // Midgame king pawn shield & open-file danger
   if (endgameWeight < 0.75) {
     const shieldScale = 1 - endgameWeight;
     if (whiteKingRow === 7 && (whiteKingCol <= 2 || whiteKingCol >= 5)) {
@@ -686,6 +812,9 @@ function evaluateBoard(chess: Chess, proMode = false): number {
         const p5 = board[5][f];
         if (p6 && p6.type === 'p' && p6.color === 'w') shield += 14;
         else if (p5 && p5.type === 'p' && p5.color === 'w') shield += 6;
+        else if (ultraMode && whitePawnsByFile[f] === 0 && (blackQueens > 0 || blackRookPositions.length > 0)) {
+          shield -= 18; // Open/semi-open file directly aimed at White's castled king
+        }
       }
       score += Math.round(shield * shieldScale);
     }
@@ -696,6 +825,9 @@ function evaluateBoard(chess: Chess, proMode = false): number {
         const p2 = board[2][f];
         if (p1 && p1.type === 'p' && p1.color === 'b') shield += 14;
         else if (p2 && p2.type === 'p' && p2.color === 'b') shield += 6;
+        else if (ultraMode && blackPawnsByFile[f] === 0 && (whiteQueens > 0 || whiteRookPositions.length > 0)) {
+          shield -= 18;
+        }
       }
       score -= Math.round(shield * shieldScale);
     }
@@ -719,7 +851,7 @@ export function evaluatePositionFast(fen: string): { cpWhite: number; mateWhite:
     if (chess.isDraw()) {
       return { cpWhite: 0, mateWhite: null };
     }
-    return { cpWhite: evaluateBoard(chess, true), mateWhite: null };
+    return { cpWhite: evaluateBoard(chess, true, true), mateWhite: null };
   } catch {
     return { cpWhite: 0, mateWhite: null };
   }
@@ -739,10 +871,12 @@ interface SearchState {
   nodes: number;
   aborted: boolean;
   proMode: boolean;
+  ultraMode: boolean;
   qMaxDepth: number;
   tt: Map<string, TTEntry>;
   killers: Map<number, [string, string]>;
   history: Map<string, number>;
+  countermoves: Map<string, string>;
 }
 
 function getTtKey(chess: Chess): string {
@@ -754,11 +888,35 @@ function moveToUci(m: Move): string {
   return `${m.from}${m.to}${m.promotion || ''}`;
 }
 
+function hasSideNonPawnMaterial(chess: Chess, side: 'w' | 'b'): boolean {
+  for (const row of chess.board()) {
+    for (const sq of row) {
+      if (sq && sq.color === side && sq.type !== 'p' && sq.type !== 'k') {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+function makeNullMoveChess(chess: Chess): Chess | null {
+  try {
+    const parts = chess.fen().split(' ');
+    if (parts.length < 6) return null;
+    parts[1] = parts[1] === 'w' ? 'b' : 'w';
+    parts[3] = '-'; // Reset en-passant target on null move
+    return new Chess(parts.join(' '));
+  } catch {
+    return null;
+  }
+}
+
 function orderMoves(
   moves: Move[],
   ttBestUci?: string,
   killerPair?: [string, string],
-  history?: Map<string, number>
+  history?: Map<string, number>,
+  counterMoveUci?: string
 ): Move[] {
   return moves.sort((a, b) => {
     const uciA = moveToUci(a);
@@ -778,14 +936,19 @@ function orderMoves(
 
     if (killerPair) {
       if (uciA === killerPair[0]) scoreA += 50000;
-      else if (uciA === killerPair[1]) scoreA += 40000;
+      else if (uciA === killerPair[1]) scoreA += 42000;
       if (uciB === killerPair[0]) scoreB += 50000;
-      else if (uciB === killerPair[1]) scoreB += 40000;
+      else if (uciB === killerPair[1]) scoreB += 42000;
+    }
+
+    if (counterMoveUci) {
+      if (uciA === counterMoveUci) scoreA += 38000;
+      if (uciB === counterMoveUci) scoreB += 38000;
     }
 
     if (history) {
-      scoreA += history.get(uciA) || 0;
-      scoreB += history.get(uciB) || 0;
+      scoreA += history.get(`${a.color}:${uciA}`) ?? history.get(uciA) ?? 0;
+      scoreB += history.get(`${b.color}:${uciB}`) ?? history.get(uciB) ?? 0;
     }
 
     if (a.san.includes('+')) scoreA += 3500;
@@ -794,16 +957,41 @@ function orderMoves(
   });
 }
 
-function recordKiller(search: SearchState, ply: number, uci: string, depth: number): void {
+function recordQuietCutoff(
+  search: SearchState,
+  ply: number,
+  color: 'w' | 'b',
+  cutoffUci: string,
+  depth: number,
+  prevMoveUci: string | undefined,
+  quietTried: string[]
+): void {
   const existing = search.killers.get(ply);
   if (!existing) {
-    search.killers.set(ply, [uci, '']);
-  } else if (existing[0] !== uci) {
-    search.killers.set(ply, [uci, existing[0]]);
+    search.killers.set(ply, [cutoffUci, '']);
+  } else if (existing[0] !== cutoffUci) {
+    search.killers.set(ply, [cutoffUci, existing[0]]);
   }
+
   if (search.proMode) {
-    const prev = search.history.get(uci) || 0;
-    search.history.set(uci, Math.min(35000, prev + depth * depth * 12));
+    const key = `${color}:${cutoffUci}`;
+    const bonus = depth * depth * (search.ultraMode ? 16 : 12);
+    const prev = search.history.get(key) || 0;
+    search.history.set(key, Math.min(36000, prev + bonus));
+
+    if (search.ultraMode) {
+      if (prevMoveUci) {
+        search.countermoves.set(prevMoveUci, cutoffUci);
+      }
+      // History malus for quiet moves that failed before the beta cutoff
+      const malus = depth * depth * 6;
+      for (const failedUci of quietTried) {
+        if (failedUci === cutoffUci) continue;
+        const fKey = `${color}:${failedUci}`;
+        const cur = search.history.get(fKey) || 0;
+        search.history.set(fKey, Math.max(-18000, cur - malus));
+      }
+    }
   }
 }
 
@@ -821,26 +1009,49 @@ function quiescence(
     return 0;
   }
 
-  const standPat = evaluateBoard(chess, search.proMode);
-  if (qDepth <= 0) return standPat;
-
-  if (maximizingWhite) {
-    if (standPat >= beta) return beta;
-    if (standPat + 950 < alpha) return alpha;
-    if (standPat > alpha) alpha = standPat;
-  } else {
-    if (standPat <= alpha) return alpha;
-    if (standPat - 950 > beta) return beta;
-    if (standPat < beta) beta = standPat;
+  if (chess.isCheckmate()) {
+    return chess.turn() === 'w' ? -99900 : 99900;
+  }
+  if (chess.isDraw()) {
+    return 0;
   }
 
-  const tacticalMoves = orderMoves(
-    chess.moves({ verbose: true }).filter((m) => Boolean(m.captured) || Boolean(m.promotion))
-  );
+  const inCheck = chess.inCheck();
+  const standPat = evaluateBoard(chess, search.proMode, search.ultraMode);
+  if (qDepth <= 0 && !inCheck) return standPat;
+
+  if (!inCheck) {
+    if (maximizingWhite) {
+      if (standPat >= beta) return beta;
+      if (standPat + 975 < alpha) return alpha; // Big delta pruning
+      if (standPat > alpha) alpha = standPat;
+    } else {
+      if (standPat <= alpha) return alpha;
+      if (standPat - 975 > beta) return beta;
+      if (standPat < beta) beta = standPat;
+    }
+  }
+
+  const allLegal = chess.moves({ verbose: true });
+  const candidates = inCheck
+    ? orderMoves(allLegal)
+    : orderMoves(
+        allLegal.filter((m) => {
+          if (m.promotion) return true;
+          if (!m.captured) return false;
+          // Ultra SEE-lite delta filter: skip hopeless pawn/minor sacrifices into much weaker pieces when far below alpha
+          if (search.ultraMode) {
+            const gain = PIECE_VALUES[m.captured] + 200;
+            if (maximizingWhite && standPat + gain < alpha) return false;
+            if (!maximizingWhite && standPat - gain > beta) return false;
+          }
+          return true;
+        })
+      );
 
   if (maximizingWhite) {
-    let best = standPat;
-    for (const move of tacticalMoves) {
+    let best = inCheck ? -Infinity : standPat;
+    for (const move of candidates) {
       chess.move(move);
       const score = quiescence(chess, alpha, beta, false, qDepth - 1, search);
       chess.undo();
@@ -849,10 +1060,10 @@ function quiescence(
       if (score > alpha) alpha = score;
       if (beta <= alpha) break;
     }
-    return best;
+    return best === -Infinity ? standPat : best;
   } else {
-    let best = standPat;
-    for (const move of tacticalMoves) {
+    let best = inCheck ? Infinity : standPat;
+    for (const move of candidates) {
       chess.move(move);
       const score = quiescence(chess, alpha, beta, true, qDepth - 1, search);
       chess.undo();
@@ -861,7 +1072,7 @@ function quiescence(
       if (score < beta) beta = score;
       if (beta <= alpha) break;
     }
-    return best;
+    return best === Infinity ? standPat : best;
   }
 }
 
@@ -872,7 +1083,9 @@ function minimax(
   alpha: number,
   beta: number,
   maximizingWhite: boolean,
-  search: SearchState
+  search: SearchState,
+  allowNull = true,
+  prevMoveUci?: string
 ): number {
   search.nodes++;
   if ((search.nodes & 15) === 0 && performance.now() >= search.deadline) {
@@ -889,8 +1102,8 @@ function minimax(
   }
 
   const inCheck = chess.inCheck();
-  // Pro mode check extension (prevents horizon blunders on forcing checks)
-  const effectiveDepth = search.proMode && inCheck && ply < 10 ? depth + 1 : depth;
+  const maxCheckExtPly = search.ultraMode ? 15 : 10;
+  const effectiveDepth = search.proMode && inCheck && ply < maxCheckExtPly ? depth + 1 : depth;
 
   if (effectiveDepth <= 0) {
     return quiescence(chess, alpha, beta, maximizingWhite, search.qMaxDepth, search);
@@ -898,21 +1111,57 @@ function minimax(
 
   const alphaOrig = alpha;
   const betaOrig = beta;
+  const isPvNode = beta - alpha > 1;
   const ttKey = getTtKey(chess);
   const ttEntry = search.tt.get(ttKey);
 
-  if (ttEntry && ttEntry.depth >= effectiveDepth) {
+  if (ttEntry && ttEntry.depth >= effectiveDepth && (!isPvNode || ttEntry.flag === 'EXACT')) {
     if (ttEntry.flag === 'EXACT') return ttEntry.score;
     if (ttEntry.flag === 'LOWER') alpha = Math.max(alpha, ttEntry.score);
     else if (ttEntry.flag === 'UPPER') beta = Math.min(beta, ttEntry.score);
     if (alpha >= beta) return ttEntry.score;
   }
 
+  // Ultra Reverse Futility Pruning (Static Null Move) & Null-Move Pruning
+  let staticEval: number | null = null;
+  if (search.ultraMode && !inCheck && !isPvNode && Math.abs(alpha) < 90000 && Math.abs(beta) < 90000) {
+    staticEval = evaluateBoard(chess, true, true);
+
+    // 1. Reverse Futility Pruning at shallow frontier depths
+    if (effectiveDepth <= 2) {
+      const margin = 115 * effectiveDepth;
+      if (maximizingWhite && staticEval - margin >= beta) return staticEval;
+      if (!maximizingWhite && staticEval + margin <= alpha) return staticEval;
+    }
+
+    // 2. Null-Move Pruning (R = 2 or 3) when side has non-pawn pieces
+    if (
+      allowNull &&
+      effectiveDepth >= 3 &&
+      ply > 0 &&
+      ((maximizingWhite && staticEval >= beta) || (!maximizingWhite && staticEval <= alpha)) &&
+      hasSideNonPawnMaterial(chess, chess.turn())
+    ) {
+      const nullChess = makeNullMoveChess(chess);
+      if (nullChess) {
+        const R = effectiveDepth >= 6 ? 3 : 2;
+        const nullScore = maximizingWhite
+          ? minimax(nullChess, effectiveDepth - 1 - R, ply + 1, beta - 1, beta, false, search, false)
+          : minimax(nullChess, effectiveDepth - 1 - R, ply + 1, alpha, alpha + 1, true, search, false);
+        if (search.aborted) return 0;
+        if (maximizingWhite && nullScore >= beta && nullScore < 90000) return beta;
+        if (!maximizingWhite && nullScore <= alpha && nullScore > -90000) return alpha;
+      }
+    }
+  }
+
+  const counterMove = search.ultraMode && prevMoveUci ? search.countermoves.get(prevMoveUci) : undefined;
   const moves = orderMoves(
     chess.moves({ verbose: true }),
     ttEntry?.bestMoveUci,
     search.killers.get(ply),
-    search.proMode ? search.history : undefined
+    search.proMode ? search.history : undefined,
+    counterMove
   );
   if (moves.length === 0) {
     return 0;
@@ -921,31 +1170,63 @@ function minimax(
   let bestMoveUci = moveToUci(moves[0]);
   let bestScore = maximizingWhite ? -Infinity : Infinity;
   let moveIndex = 0;
+  const quietTried: string[] = [];
+  const sideToMove = chess.turn();
 
   if (maximizingWhite) {
     for (const move of moves) {
+      const uci = moveToUci(move);
+
+      // Ultra futility pruning on late quiet frontier moves
+      if (
+        search.ultraMode &&
+        effectiveDepth === 1 &&
+        !inCheck &&
+        !isPvNode &&
+        moveIndex >= 4 &&
+        !move.captured &&
+        !move.promotion &&
+        !move.san.includes('+')
+      ) {
+        if (staticEval === null) staticEval = evaluateBoard(chess, true, true);
+        if (staticEval + 165 <= alpha) {
+          moveIndex++;
+          continue;
+        }
+      }
+
       chess.move(move);
+      const givesCheck = chess.inCheck();
+      const isQuiet = !move.captured && !move.promotion && !inCheck && !givesCheck;
+      if (isQuiet) quietTried.push(uci);
 
-      const isQuiet = !move.captured && !move.promotion && !inCheck && !chess.inCheck();
+      // Ultra 7th-rank passed pawn push extension
+      const pawnPushExt =
+        search.ultraMode && move.piece === 'p' && move.to[1] === '7' && ply < 10 ? 1 : 0;
+      const nextDepth = effectiveDepth - 1 + pawnPushExt;
+
       let evaluation: number;
-
       if (search.proMode && moveIndex > 0) {
-        // Late Move Reductions (LMR) + Principal Variation Search (PVS)
-        const reduction = effectiveDepth >= 3 && moveIndex >= 4 && isQuiet ? 1 : 0;
+        let reduction = 0;
+        if (effectiveDepth >= 3 && moveIndex >= 3 && isQuiet) {
+          reduction = search.ultraMode && effectiveDepth >= 5 && moveIndex >= 8 ? 2 : 1;
+        }
         evaluation = minimax(
           chess,
-          effectiveDepth - 1 - reduction,
+          Math.max(0, nextDepth - reduction),
           ply + 1,
           alpha,
           alpha + 1,
           false,
-          search
+          search,
+          true,
+          uci
         );
         if (!search.aborted && evaluation > alpha && (reduction > 0 || evaluation < beta)) {
-          evaluation = minimax(chess, effectiveDepth - 1, ply + 1, alpha, beta, false, search);
+          evaluation = minimax(chess, nextDepth, ply + 1, alpha, beta, false, search, true, uci);
         }
       } else {
-        evaluation = minimax(chess, effectiveDepth - 1, ply + 1, alpha, beta, false, search);
+        evaluation = minimax(chess, nextDepth, ply + 1, alpha, beta, false, search, true, uci);
       }
 
       chess.undo();
@@ -953,12 +1234,12 @@ function minimax(
 
       if (evaluation > bestScore) {
         bestScore = evaluation;
-        bestMoveUci = moveToUci(move);
+        bestMoveUci = uci;
       }
       if (evaluation > alpha) alpha = evaluation;
       if (beta <= alpha) {
         if (!move.captured && !move.promotion) {
-          recordKiller(search, ply, moveToUci(move), effectiveDepth);
+          recordQuietCutoff(search, ply, sideToMove, uci, effectiveDepth, prevMoveUci, quietTried);
         }
         break;
       }
@@ -966,27 +1247,56 @@ function minimax(
     }
   } else {
     for (const move of moves) {
+      const uci = moveToUci(move);
+
+      if (
+        search.ultraMode &&
+        effectiveDepth === 1 &&
+        !inCheck &&
+        !isPvNode &&
+        moveIndex >= 4 &&
+        !move.captured &&
+        !move.promotion &&
+        !move.san.includes('+')
+      ) {
+        if (staticEval === null) staticEval = evaluateBoard(chess, true, true);
+        if (staticEval - 165 >= beta) {
+          moveIndex++;
+          continue;
+        }
+      }
+
       chess.move(move);
+      const givesCheck = chess.inCheck();
+      const isQuiet = !move.captured && !move.promotion && !inCheck && !givesCheck;
+      if (isQuiet) quietTried.push(uci);
 
-      const isQuiet = !move.captured && !move.promotion && !inCheck && !chess.inCheck();
+      const pawnPushExt =
+        search.ultraMode && move.piece === 'p' && move.to[1] === '2' && ply < 10 ? 1 : 0;
+      const nextDepth = effectiveDepth - 1 + pawnPushExt;
+
       let evaluation: number;
-
       if (search.proMode && moveIndex > 0) {
-        const reduction = effectiveDepth >= 3 && moveIndex >= 4 && isQuiet ? 1 : 0;
+        let reduction = 0;
+        if (effectiveDepth >= 3 && moveIndex >= 3 && isQuiet) {
+          reduction = search.ultraMode && effectiveDepth >= 5 && moveIndex >= 8 ? 2 : 1;
+        }
         evaluation = minimax(
           chess,
-          effectiveDepth - 1 - reduction,
+          Math.max(0, nextDepth - reduction),
           ply + 1,
           beta - 1,
           beta,
           true,
-          search
+          search,
+          true,
+          uci
         );
         if (!search.aborted && evaluation < beta && (reduction > 0 || evaluation > alpha)) {
-          evaluation = minimax(chess, effectiveDepth - 1, ply + 1, alpha, beta, true, search);
+          evaluation = minimax(chess, nextDepth, ply + 1, alpha, beta, true, search, true, uci);
         }
       } else {
-        evaluation = minimax(chess, effectiveDepth - 1, ply + 1, alpha, beta, true, search);
+        evaluation = minimax(chess, nextDepth, ply + 1, alpha, beta, true, search, true, uci);
       }
 
       chess.undo();
@@ -994,12 +1304,12 @@ function minimax(
 
       if (evaluation < bestScore) {
         bestScore = evaluation;
-        bestMoveUci = moveToUci(move);
+        bestMoveUci = uci;
       }
       if (evaluation < beta) beta = evaluation;
       if (beta <= alpha) {
         if (!move.captured && !move.promotion) {
-          recordKiller(search, ply, moveToUci(move), effectiveDepth);
+          recordQuietCutoff(search, ply, sideToMove, uci, effectiveDepth, prevMoveUci, quietTried);
         }
         break;
       }
@@ -1007,7 +1317,7 @@ function minimax(
     }
   }
 
-  const maxTtSize = search.proMode ? 65000 : 24000;
+  const maxTtSize = search.ultraMode ? 120000 : search.proMode ? 65000 : 24000;
   if (search.tt.size < maxTtSize) {
     let flag: TTFlag = 'EXACT';
     if (bestScore <= alphaOrig) flag = 'UPPER';
@@ -1020,14 +1330,18 @@ function minimax(
 
 export function computeBestBotMove(
   fen: string,
-  bot: ComputerBot = MINIMAX_H1_FLASH
+  bot: ComputerBot = MINIMAX_H1_FLASH,
+  priorPositionKeys?: string[]
 ): { from: string; to: string; promotion?: string } | null {
   const chess = new Chess(fen);
   const rootMoves = orderMoves(chess.moves({ verbose: true }));
   if (rootMoves.length === 0) return null;
 
+  const ultraMode = bot.difficulty === 'ultra';
+  const proMode = bot.difficulty === 'pro' || ultraMode;
+
   if (bot.blunderChance === 0) {
-    const bookMove = lookupOpeningBook(chess);
+    const bookMove = lookupOpeningBook(chess, ultraMode);
     if (bookMove) {
       return { from: bookMove.from, to: bookMove.to, promotion: bookMove.promotion };
     }
@@ -1038,64 +1352,148 @@ export function computeBestBotMove(
     return { from: randomMove.from, to: randomMove.to, promotion: randomMove.promotion };
   }
 
-  const proMode = bot.difficulty === 'pro' || bot.difficulty === 'ultra';
   const maximizingWhite = chess.turn() === 'w';
-  const timeBudgetMs = bot.timeBudgetMs && bot.timeBudgetMs > 0 ? bot.timeBudgetMs : proMode ? 380 : 85;
+  const defaultBudget = ultraMode ? 1100 : proMode ? 520 : 85;
+  const timeBudgetMs = bot.timeBudgetMs && bot.timeBudgetMs > 0 ? bot.timeBudgetMs : defaultBudget;
   const maxDepth = Math.max(1, bot.depth);
+
+  // Build repetition lookup so Ultra avoids accidental draw by repetition when winning
+  const seenCounts = new Map<string, number>();
+  if (priorPositionKeys) {
+    for (const k of priorPositionKeys) {
+      const clean = k.split(' ').slice(0, 4).join(' ');
+      seenCounts.set(clean, (seenCounts.get(clean) || 0) + 1);
+    }
+  }
 
   const start = performance.now();
   const deadline = start + timeBudgetMs;
   const tt = new Map<string, TTEntry>();
   const killers = new Map<number, [string, string]>();
   const history = new Map<string, number>();
+  const countermoves = new Map<string, string>();
+
   let bestMove = rootMoves[0];
+  let prevIterScore = 0;
 
   for (let currentDepth = 1; currentDepth <= maxDepth; currentDepth++) {
     if (currentDepth > 1 && performance.now() >= deadline) break;
 
-    const ordered = orderMoves([...rootMoves], moveToUci(bestMove), undefined, proMode ? history : undefined);
-    const search: SearchState = {
-      deadline: currentDepth === 1 ? start + Math.max(timeBudgetMs, 450) : deadline,
-      nodes: 0,
-      aborted: false,
-      proMode,
-      qMaxDepth: proMode ? 5 : 3,
-      tt,
-      killers,
-      history,
+    const runRootWindow = (winAlpha: number, winBeta: number) => {
+      const ordered = orderMoves(
+        [...rootMoves],
+        moveToUci(bestMove),
+        undefined,
+        proMode ? history : undefined
+      );
+      const search: SearchState = {
+        deadline: currentDepth === 1 ? start + Math.max(timeBudgetMs, 500) : deadline,
+        nodes: 0,
+        aborted: false,
+        proMode,
+        ultraMode,
+        qMaxDepth: ultraMode ? 8 : proMode ? 5 : 3,
+        tt,
+        killers,
+        history,
+        countermoves,
+      };
+
+      let iterBestMove = ordered[0];
+      let iterBestScore = maximizingWhite ? -Infinity : Infinity;
+      let alpha = winAlpha;
+      let beta = winBeta;
+      let moveIdx = 0;
+
+      for (const move of ordered) {
+        const uci = moveToUci(move);
+        chess.move(move);
+        const childKey = getTtKey(chess);
+        const repCount = seenCounts.get(childKey) || 0;
+
+        let score: number;
+        if (repCount >= 2) {
+          score = 0; // Immediate threefold repetition draw
+        } else if (proMode && moveIdx > 0) {
+          // Root PVS zero-window scout after first PV move
+          if (maximizingWhite) {
+            score = minimax(chess, currentDepth - 1, 1, alpha, alpha + 1, false, search, true, uci);
+            if (!search.aborted && score > alpha && score < beta) {
+              score = minimax(chess, currentDepth - 1, 1, alpha, beta, false, search, true, uci);
+            }
+          } else {
+            score = minimax(chess, currentDepth - 1, 1, beta - 1, beta, true, search, true, uci);
+            if (!search.aborted && score < beta && score > alpha) {
+              score = minimax(chess, currentDepth - 1, 1, alpha, beta, true, search, true, uci);
+            }
+          }
+        } else {
+          score = minimax(chess, currentDepth - 1, 1, alpha, beta, !maximizingWhite, search, true, uci);
+        }
+
+        // Ultra contempt: discourage repeating positions early when holding an advantage
+        if (!search.aborted && ultraMode && repCount >= 1 && Math.abs(score) < 90000) {
+          score += maximizingWhite ? -28 : 28;
+        }
+
+        chess.undo();
+        if (search.aborted) break;
+
+        if (maximizingWhite) {
+          if (score > iterBestScore) {
+            iterBestScore = score;
+            iterBestMove = move;
+          }
+          if (score > alpha) alpha = score;
+        } else {
+          if (score < iterBestScore) {
+            iterBestScore = score;
+            iterBestMove = move;
+          }
+          if (score < beta) beta = score;
+        }
+        if (beta <= alpha) break;
+        moveIdx++;
+      }
+
+      return { aborted: search.aborted, iterBestMove, iterBestScore };
     };
 
-    let iterBestMove = ordered[0];
-    let iterBestScore = maximizingWhite ? -Infinity : Infinity;
-    let alpha = -Infinity;
-    let beta = Infinity;
+    if (ultraMode && currentDepth >= 4 && Math.abs(prevIterScore) < 90000) {
+      let delta = 45;
+      let winAlpha = prevIterScore - delta;
+      let winBeta = prevIterScore + delta;
+      let res = runRootWindow(winAlpha, winBeta);
 
-    for (const move of ordered) {
-      chess.move(move);
-      const score = minimax(chess, currentDepth - 1, 1, alpha, beta, !maximizingWhite, search);
-      chess.undo();
-      if (search.aborted) break;
-
-      if (maximizingWhite) {
-        if (score > iterBestScore) {
-          iterBestScore = score;
-          iterBestMove = move;
+      while (!res.aborted && (res.iterBestScore <= winAlpha || res.iterBestScore >= winBeta)) {
+        delta *= 4;
+        if (delta > 600) {
+          winAlpha = -Infinity;
+          winBeta = Infinity;
+        } else {
+          winAlpha = prevIterScore - delta;
+          winBeta = prevIterScore + delta;
         }
-        if (score > alpha) alpha = score;
-      } else {
-        if (score < iterBestScore) {
-          iterBestScore = score;
-          iterBestMove = move;
-        }
-        if (score < beta) beta = score;
+        res = runRootWindow(winAlpha, winBeta);
+        if (winAlpha === -Infinity && winBeta === Infinity) break;
       }
-    }
 
-    if (!search.aborted) {
-      bestMove = iterBestMove;
-      if (Math.abs(iterBestScore) >= 99000) break;
+      if (!res.aborted) {
+        bestMove = res.iterBestMove;
+        prevIterScore = res.iterBestScore;
+        if (Math.abs(res.iterBestScore) >= 99000) break;
+      } else {
+        break;
+      }
     } else {
-      break;
+      const res = runRootWindow(-Infinity, Infinity);
+      if (!res.aborted) {
+        bestMove = res.iterBestMove;
+        prevIterScore = res.iterBestScore;
+        if (Math.abs(res.iterBestScore) >= 99000) break;
+      } else {
+        break;
+      }
     }
   }
 
@@ -1104,6 +1502,113 @@ export function computeBestBotMove(
     to: bestMove.to,
     promotion: bestMove.promotion,
   };
+}
+
+/** Convert standard SAN (e.g. "Nf3", "Qxd5+", "e8=Q#") into Chess.com-style figurine notation. */
+export function formatSanWithFigurine(san: string, color: 'w' | 'b'): string {
+  if (!san) return '';
+  const figurines: Record<string, string> =
+    color === 'w'
+      ? { K: '♔', Q: '♕', R: '♖', B: '♗', N: '♘' }
+      : { K: '♚', Q: '♛', R: '♜', B: '♝', N: '♞' };
+
+  let formatted = san;
+  if (/^[KQRBN]/.test(formatted)) {
+    formatted = (figurines[formatted[0]] || formatted[0]) + formatted.slice(1);
+  }
+  formatted = formatted.replace(/=([QRBN])/, (_, p: string) => `=${figurines[p] || p}`);
+  return formatted;
+}
+
+/** Dynamic Chess.com-style bot dialogue bubble lines based on live match context. */
+export function getBotMatchCommentary(params: {
+  bot: ComputerBot;
+  moveCount: number;
+  lastSan?: string;
+  isGameOver?: boolean;
+  botWon?: boolean;
+  isDraw?: boolean;
+  botThinking?: boolean;
+}): string {
+  const { bot, moveCount, lastSan = '', isGameOver, botWon, isDraw, botThinking } = params;
+  const isUltra = bot.difficulty === 'ultra';
+  const isPro = bot.difficulty === 'pro';
+
+  if (isGameOver) {
+    if (isDraw) {
+      return isUltra
+        ? 'An equilibrium worthy of study. Neither side blinked.'
+        : isPro
+        ? 'Well defended — a balanced draw across every phase.'
+        : 'Good game! Dead even to the very end.';
+    }
+    if (botWon) {
+      return isUltra
+        ? 'Checkmate was inevitable six plies ago. Review the critical turning point with Coach.'
+        : isPro
+        ? 'Precision in the transition sealed it. Ready for a rematch?'
+        : 'Sharp tactical finish! Want to run it back?';
+    }
+    return isUltra
+      ? 'Impressive calculation — you found the narrow path through my defenses.'
+      : isPro
+      ? 'Strong game! Your positional pressure broke through.'
+      : 'Nice victory! You caught me in the tactics.';
+  }
+
+  if (botThinking) {
+    return isUltra
+      ? 'Scanning principal variations and endgame extensions...'
+      : isPro
+      ? 'Evaluating candidate lines...'
+      : 'Calculating fast reply...';
+  }
+
+  if (moveCount === 0) {
+    return bot.greeting || 'Make your opening move when ready.';
+  }
+
+  if (lastSan.includes('+')) {
+    return isUltra
+      ? 'Forcing checks narrow the tree — let us see where your king steps.'
+      : isPro
+      ? 'A forcing check! King safety comes first.'
+      : 'Check on the board — watch the diagonals!';
+  }
+
+  if (lastSan === 'O-O' || lastSan === 'O-O-O') {
+    return isUltra
+      ? 'Kings are tucked away. Now the central pawn break decides the initiative.'
+      : 'Castled and connected — classic middlegame tension ahead.';
+  }
+
+  if (lastSan.includes('x')) {
+    return isUltra
+      ? 'Every exchange transforms the pawn structure and the endgame.'
+      : isPro
+      ? 'Piece tension resolved — watch the newly opened files.'
+      : 'Trades on the board! Open lines favor active pieces.';
+  }
+
+  if (moveCount <= 10) {
+    return isUltra
+      ? 'Classical theory holds for now. One inaccuracy cedes the initiative.'
+      : isPro
+      ? 'Clean development and central control — textbook opening.'
+      : 'Fast development! Let us fight for the center.';
+  }
+
+  if (moveCount >= 50) {
+    return isUltra
+      ? 'Endgame geometry: king activity and passed pawns outweigh everything.'
+      : 'Deep into the endgame — activate your king!';
+  }
+
+  return isUltra
+    ? 'Every quiet move shifts control of key squares. Calculate before committing.'
+    : isPro
+    ? 'Interesting structure. Look for outposts and open files.'
+    : 'Solid move — let us see how the tactics unfold!';
 }
 
 export interface CapturedPiecesSummary {
